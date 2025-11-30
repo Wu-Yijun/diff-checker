@@ -5,61 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Precision Diff Checker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            gray: {
-              750: '#2d3748',
-              850: '#1a202c',
-              950: '#0d1117',
-            }
-          },
-          fontFamily: {
-            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Custom scrollbar for that sleek dev-tool look */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #1a202c;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #4a5568;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #718096;
-    }
-  </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
-  <link rel="stylesheet" href="./index.css">
+  <link rel="stylesheet" href="./src/index.css">
 </head>
 
 <body class="bg-gray-950 text-gray-100 antialiased h-screen w-screen overflow-hidden">
   <div id="root" class="h-full w-full"></div>
-  <script type="module" src="./index.tsx"></script>
+  <script type="module" src="./src/index.tsx"></script>
 </body>
 
 </html>

@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "@types/diff-match-patch": "^1.0.36",
     "diff-match-patch": "^1.0.5",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

@@ -34,9 +34,13 @@ export default function App() {
   const [cleanupMode, setCleanupMode] = useState<'semantic' | 'efficiency'>('efficiency');
 
   // Theme State
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return (savedTheme as 'light' | 'dark') || 'dark';
+  });
 
   useEffect(() => {
+    localStorage.setItem('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -98,7 +102,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans selection:bg-blue-500/30 transition-colors duration-200">
-
       {/* Sidebar - Snippet Manager */}
       <div className="w-80 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 flex-shrink-0 z-10 transition-colors duration-200">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
@@ -126,8 +129,8 @@ export default function App() {
                 e.dataTransfer.effectAllowed = 'copy';
               }}
               className={`group p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-grab active:cursor-grabbing ${(leftId === snippet.id || rightId === snippet.id)
-                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-sm'
-                  : 'bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-sm'
+                : 'bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                 }`}
             >
               <div className="flex justify-between items-start mb-2">
@@ -159,8 +162,8 @@ export default function App() {
                 <button
                   onClick={() => setLeftId(snippet.id)}
                   className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${leftId === snippet.id
-                      ? 'bg-blue-600 text-white shadow-inner'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'bg-blue-600 text-white shadow-inner'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 >
                   Set Left
@@ -168,8 +171,8 @@ export default function App() {
                 <button
                   onClick={() => setRightId(snippet.id)}
                   className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${rightId === snippet.id
-                      ? 'bg-blue-600 text-white shadow-inner'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'bg-blue-600 text-white shadow-inner'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 >
                   Set Right
