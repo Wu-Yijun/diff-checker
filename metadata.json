@@ -1,0 +1,5 @@
+{
+  "name": "Precision Diff Checker",
+  "description": "A high-precision, character-level text comparison tool. Create multiple text snippets and compare any two side-by-side with advanced difference highlighting.",
+  "requestFramePermissions": []
+}
