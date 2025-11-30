@@ -238,18 +238,7 @@ export default function App() {
               />
             </div>
 
-            {/* Snippet Indicators */}
-            <div className="flex items-center gap-3 text-sm bg-gray-100 dark:bg-gray-950 py-1.5 px-3 rounded-full border border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-2 max-w-[150px]">
-                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                <span className="truncate text-gray-600 dark:text-gray-300">{leftSnippet ? leftSnippet.title : 'None'}</span>
-              </div>
-              <span className="text-gray-400 dark:text-gray-600">vs</span>
-              <div className="flex items-center gap-2 max-w-[150px]">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span className="truncate text-gray-600 dark:text-gray-300">{rightSnippet ? rightSnippet.title : 'None'}</span>
-              </div>
-            </div>
+
           </div>
         </header>
 
