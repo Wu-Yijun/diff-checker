@@ -37,11 +37,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          # optional: keep history of gh-pages branch
-          keep_files: false
-          # optional: set custom domain if needed
-          # cname: yourdomain.com
+          path: ./dist
       
       - name: Deploy to GitHub Pages
         id: deployment
