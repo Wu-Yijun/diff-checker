@@ -3,7 +3,6 @@
 
 A **high‑performance, visual diff tool** for comparing code snippets, text files, or any string data. It highlights insertions, deletions, and modifications in an intuitive UI.
 
-
 ## 📸 Screenshots
 
 > Replace the placeholders below with actual screenshots.
