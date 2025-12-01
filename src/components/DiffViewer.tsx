@@ -450,54 +450,56 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
-            {/* Edit Mode Textarea Overlay */}
-            {isEditMode && (
-              <textarea
-                value={editableLeft}
-                onChange={(e) => handleTextareaChange('left', e.target.value)}
-                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
-                spellCheck={false}
-              />
-            )}
-            <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
-              {diff.map((part, index) => {
-                // For 'insert', check if it's paired with a previous delete
-                if (part.type === 'insert') {
-                  // If paired, DO NOT show placeholder
-                  if (diff[index - 1]?.type === 'delete') return null;
+          <div className="flex-1 overflow-auto custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
+            <div className="relative min-h-full p-4 font-mono text-sm leading-6">
+              {/* Edit Mode Textarea Overlay */}
+              {isEditMode && (
+                <textarea
+                  value={editableLeft}
+                  onChange={(e) => handleTextareaChange('left', e.target.value)}
+                  className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
+                  spellCheck={false}
+                />
+              )}
+              <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
+                {diff.map((part, index) => {
+                  // For 'insert', check if it's paired with a previous delete
+                  if (part.type === 'insert') {
+                    // If paired, DO NOT show placeholder
+                    if (diff[index - 1]?.type === 'delete') return null;
+
+                    return (
+                      <span
+                        key={index}
+                        className={`absolute -translate-x-1  inline-block bg-red-500/70 dark:bg-red-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
+                        title="Missing content (Right Click to add)"
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={() => handleDiffClick(index, part, 'left')}
+                      >
+
+                      </span>
+                    );
+                  }
+
+                  const baseClass = part.type === 'delete' ?
+                    ("bg-red-100 dark:bg-red-900/40 rounded-[2px] border-b-2 border-red-200 dark:border-red-800 "
+                      + (isEditMode ? "text-gray-500/0 " : "text-red-800 dark:text-red-200 "))
+                    : (isEditMode ? "text-gray-500/0 " : "text-gray-600 dark:text-gray-400");
 
                   return (
                     <span
                       key={index}
-                      className={`absolute -translate-x-1  inline-block bg-red-500/70 dark:bg-red-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
-                      title="Missing content (Right Click to add)"
+                      className={`${baseClass} ${getHighlightClass(index)}`}
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'left')}
                     >
-
+                      {part.value}
                     </span>
                   );
-                }
-
-                const baseClass = part.type === 'delete' ?
-                  ("bg-red-100 dark:bg-red-900/40 rounded-[2px] border-b-2 border-red-200 dark:border-red-800 "
-                    + (isEditMode ? "text-gray-500/0 " : "text-red-800 dark:text-red-200 "))
-                  : (isEditMode ? "text-gray-500/0 " : "text-gray-600 dark:text-gray-400");
-
-                return (
-                  <span
-                    key={index}
-                    className={`${baseClass} ${getHighlightClass(index)}`}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    onClick={() => handleDiffClick(index, part, 'left')}
-                  >
-                    {part.value}
-                  </span>
-                );
-              })}
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -531,54 +533,56 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
-            {/* Edit Mode Textarea Overlay */}
-            {isEditMode && (
-              <textarea
-                value={editableRight}
-                onChange={(e) => handleTextareaChange('right', e.target.value)}
-                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
-                spellCheck={false}
-              />
-            )}
-            <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
-              {diff.map((part, index) => {
-                // For 'delete', check if it's paired with a next insert
-                if (part.type === 'delete') {
-                  // If paired, DO NOT show placeholder
-                  if (diff[index + 1]?.type === 'insert') return null;
+          <div className="flex-1 overflow-auto bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
+            <div className="relative min-h-full p-4 font-mono text-sm leading-6">
+              {/* Edit Mode Textarea Overlay */}
+              {isEditMode && (
+                <textarea
+                  value={editableRight}
+                  onChange={(e) => handleTextareaChange('right', e.target.value)}
+                  className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
+                  spellCheck={false}
+                />
+              )}
+              <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
+                {diff.map((part, index) => {
+                  // For 'delete', check if it's paired with a next insert
+                  if (part.type === 'delete') {
+                    // If paired, DO NOT show placeholder
+                    if (diff[index + 1]?.type === 'insert') return null;
+
+                    return (
+                      <span
+                        key={index}
+                        className={`absolute -translate-x-1 inline-block bg-green-500/70 dark:bg-green-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
+                        title="Missing content (Right Click to add)"
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                        onClick={() => handleDiffClick(index, part, 'right')}
+                      >
+
+                      </span>
+                    );
+                  }
+
+                  const baseClass = part.type === 'insert' ?
+                    ("bg-green-100 dark:bg-green-900/40 rounded-[2px] border-b-2 border-green-200 dark:border-green-800 "
+                      + (isEditMode ? "text-gray-500/0" : "text-green-800 dark:text-green-200"))
+                    : (isEditMode ? "text-gray-500/0" : "text-gray-600 dark:text-gray-400");
 
                   return (
                     <span
                       key={index}
-                      className={`absolute -translate-x-1 inline-block bg-green-500/70 dark:bg-green-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
-                      title="Missing content (Right Click to add)"
+                      className={`${baseClass} ${getHighlightClass(index)}`}
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'right')}
                     >
-
+                      {part.value}
                     </span>
                   );
-                }
-
-                const baseClass = part.type === 'insert' ?
-                  ("bg-green-100 dark:bg-green-900/40 rounded-[2px] border-b-2 border-green-200 dark:border-green-800 "
-                    + (isEditMode ? "text-gray-500/0" : "text-green-800 dark:text-green-200"))
-                  : (isEditMode ? "text-gray-500/0" : "text-gray-600 dark:text-gray-400");
-
-                return (
-                  <span
-                    key={index}
-                    className={`${baseClass} ${getHighlightClass(index)}`}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    onClick={() => handleDiffClick(index, part, 'right')}
-                  >
-                    {part.value}
-                  </span>
-                );
-              })}
+                })}
+              </div>
             </div>
           </div>
         </div>
