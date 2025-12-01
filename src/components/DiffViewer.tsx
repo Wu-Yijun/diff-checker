@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { computeDiff } from '../services/diffService';
 import { DiffPart, Snippet } from '../types';
 import { ClipboardIcon } from './Icons';
+import type { DiffWorkerRequest, DiffWorkerResponse } from '../workers/diff.worker';
 
 interface DiffViewerProps {
   leftSnippet: Snippet | null;
@@ -10,17 +11,81 @@ interface DiffViewerProps {
   editCost: number;
   cleanupMode: 'semantic' | 'efficiency';
   onSnippetDrop: (side: 'left' | 'right', snippetId: string) => void;
+  isEditMode: boolean;
 }
 
-export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop }) => {
+export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop, isEditMode }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = React.useState(false);
   const [dragOverSide, setDragOverSide] = React.useState<'left' | 'right' | null>(null);
 
+  // Edit mode state
+  const [editableLeft, setEditableLeft] = useState('');
+  const [editableRight, setEditableRight] = useState('');
+  const [workerDiff, setWorkerDiff] = useState<DiffPart[]>([]);
+  const workerRef = useRef<Worker | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastWorkerTimestamp = useRef<number>(0);
+
+  // Initialize editable content when snippets change
+  useEffect(() => {
+    if (leftSnippet) setEditableLeft(leftSnippet.content);
+    if (rightSnippet) setEditableRight(rightSnippet.content);
+  }, [leftSnippet?.id, rightSnippet?.id]);
+
+  // Initialize web worker
+  useEffect(() => {
+    if (isEditMode) {
+      workerRef.current = new Worker(new URL('../workers/diff.worker.ts', import.meta.url), { type: 'module' });
+
+      workerRef.current.onmessage = (e: MessageEvent<DiffWorkerResponse>) => {
+        const { parts, timestamp } = e.data;
+        // Only update if this is a newer result
+        if (timestamp >= lastWorkerTimestamp.current) {
+          lastWorkerTimestamp.current = timestamp;
+          setWorkerDiff(parts);
+        }
+      };
+
+      return () => {
+        workerRef.current?.terminate();
+        workerRef.current = null;
+      };
+    }
+  }, [isEditMode]);
+
+  // Trigger worker diff computation with debounce
+  useEffect(() => {
+    if (!isEditMode || !workerRef.current) return;
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      const request: DiffWorkerRequest = {
+        text1: editableLeft,
+        text2: editableRight,
+        editCost,
+        cleanupMode
+      };
+      workerRef.current?.postMessage(request);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode]);
+
+  // Use worker diff in edit mode, regular diff otherwise
   const diff = useMemo(() => {
+    if (isEditMode) return workerDiff;
     if (!leftSnippet || !rightSnippet) return [];
     return computeDiff(leftSnippet.content, rightSnippet.content, editCost, cleanupMode);
-  }, [leftSnippet, rightSnippet, editCost, cleanupMode]);
+  }, [isEditMode, workerDiff, leftSnippet, rightSnippet, editCost, cleanupMode]);
 
   const stats = useMemo(() => {
     let added = 0;
@@ -70,6 +135,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
+        if (isEditMode) {
+          // Update editable state in edit mode
+          if (leftSnippet?.id === id) setEditableLeft(text);
+          if (rightSnippet?.id === id) setEditableRight(text);
+        }
         onUpdateSnippet(id, text);
       }
     } catch (err) {
@@ -77,6 +147,29 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
       alert('Could not access clipboard. Please ensure you have granted permission.');
     }
   };
+
+  // Handle textarea changes with debounced snippet update
+  const handleTextareaChange = useCallback((side: 'left' | 'right', value: string) => {
+    if (side === 'left') {
+      setEditableLeft(value);
+      if (leftSnippet) {
+        // Debounce snippet update
+        if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = setTimeout(() => {
+          onUpdateSnippet(leftSnippet.id, value);
+        }, 500);
+      }
+    } else {
+      setEditableRight(value);
+      if (rightSnippet) {
+        // Debounce snippet update
+        if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = setTimeout(() => {
+          onUpdateSnippet(rightSnippet.id, value);
+        }, 500);
+      }
+    }
+  }, [leftSnippet, rightSnippet, onUpdateSnippet]);
 
   const getPairIndex = (index: number) => {
     const part = diff[index];
@@ -283,7 +376,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200">
+          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
+            {/* Edit Mode Textarea Overlay */}
+            {isEditMode && (
+              <textarea
+                value={editableLeft}
+                onChange={(e) => handleTextareaChange('left', e.target.value)}
+                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
+                spellCheck={false}
+              />
+            )}
             <div className="whitespace-pre-wrap break-words">
               {diff.map((part, index) => {
                 // For 'insert', check if it's paired with a previous delete
@@ -354,7 +456,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200">
+          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
+            {/* Edit Mode Textarea Overlay */}
+            {isEditMode && (
+              <textarea
+                value={editableRight}
+                onChange={(e) => handleTextareaChange('right', e.target.value)}
+                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
+                spellCheck={false}
+              />
+            )}
             <div className="whitespace-pre-wrap break-words">
               {diff.map((part, index) => {
                 // For 'delete', check if it's paired with a next insert
