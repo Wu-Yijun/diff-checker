@@ -400,55 +400,28 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const handleHoverEnter = useCallback((index: number, side: 'left' | 'right') => {
     setHoveredIndex(index);
 
-    const pairIndex = getPairIndex(index);
+    const pairIndex = getPairIndex(index) ?? index;
 
-    // Calculate scroll position based on equal parts position
+    // Scroll the opposite side to show the paired element
     const targetSide = side === 'left' ? 'right' : 'left';
     const scrollContainer = targetSide === 'left' ? leftScrollRef.current : rightScrollRef.current;
-    const sourceContainer = side === 'left' ? leftScrollRef.current : rightScrollRef.current;
+    const targetElement = scrollContainer?.querySelector(`[data-diff-index="${pairIndex}"]`) as HTMLElement;
 
-    if (!scrollContainer || !sourceContainer) return;
-
-    // Find the hovered element in source
-    const sourceElement = sourceContainer.querySelector(`[data-diff-index="${index}"]`) as HTMLElement;
-    if (!sourceElement) return;
-
-    // Calculate the cumulative character position up to this index (only counting 'equal' parts)
-    let charOffset = 0;
-    for (let i = 0; i < index; i++) {
-      if (diff[i].type === 'equal') {
-        charOffset += diff[i].value.length;
-      }
-    }
-
-    // Find the target element - if paired, use pair index, otherwise find by char offset
-    let targetElement: HTMLElement | null = null;
-
-    if (pairIndex !== null) {
-      targetElement = scrollContainer.querySelector(`[data-diff-index="${pairIndex}"]`) as HTMLElement;
-    }
-
-    // If we have a target element, scroll to it
-    if (targetElement) {
+    if (targetElement && scrollContainer) {
       const containerRect = scrollContainer.getBoundingClientRect();
       const elementRect = targetElement.getBoundingClientRect();
 
       // Check if element is not fully visible
-      const isAbove = elementRect.top < containerRect.top + 50; // Add some padding
-      const isBelow = elementRect.bottom > containerRect.bottom - 50;
+      const isAbove = elementRect.top < containerRect.top;
+      const isBelow = elementRect.bottom > containerRect.bottom;
 
       if (isAbove || isBelow) {
-        // Calculate relative position in source container
-        const sourceRect = sourceContainer.getBoundingClientRect();
-        const sourceElementRect = sourceElement.getBoundingClientRect();
-        const relativePositionInSource = (sourceElementRect.top - sourceRect.top + sourceContainer.scrollTop) / sourceContainer.scrollHeight;
-
-        // Apply same relative position to target container
-        const targetScrollTop = relativePositionInSource * scrollContainer.scrollHeight - (scrollContainer.clientHeight / 3);
-        scrollContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: 'smooth' });
+        // Scroll to center the element
+        const scrollTop = targetElement.offsetTop - scrollContainer.offsetTop - (scrollContainer.clientHeight / 2) + (targetElement.clientHeight / 2);
+        scrollContainer.scrollTo({ top: scrollTop, behavior: 'smooth' });
       }
     }
-  }, [diff]);
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
