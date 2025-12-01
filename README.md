@@ -17,7 +17,7 @@ A **high‑performance, visual diff tool** for comparing code snippets, text fil
 - **Customizable diff algorithms** – switch between semantic and efficiency modes.
 - **Light / Dark themes** – automatic theme detection with manual toggle.
 - **Adjustable edit cost** – fine‑tune sensitivity for changes.
-- **Real‑time editing** – *coming soon*.
+- **Real‑time editing** – Responsive diff computation with smart queuing method.
 - **Multiple snippet support** – create any number of text snippets and compare any two of them.
 
 

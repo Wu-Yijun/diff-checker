@@ -24,9 +24,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const [editableRight, setEditableRight] = useState('');
   const [workerDiff, setWorkerDiff] = useState<DiffPart[]>([]);
   const workerRef = useRef<Worker | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastWorkerTimestamp = useRef<number>(0);
+
+  // Advanced debounce state
+  const lastRequestTime = useRef<number>(0);
+  const lastResponseTime = useRef<number>(0);
+  const pendingRequest = useRef<DiffWorkerRequest | null>(null);
+  const cachedRequest = useRef<DiffWorkerRequest | null>(null);
+  const postResponseTimer = useRef<NodeJS.Timeout | null>(null);
+  const timeoutTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize editable content when snippets change
   useEffect(() => {
@@ -46,38 +53,98 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
           lastWorkerTimestamp.current = timestamp;
           setWorkerDiff(parts);
         }
+
+        // Mark response received
+        lastResponseTime.current = Date.now();
+        pendingRequest.current = null;
+
+        // Clear timeout timer
+        if (timeoutTimer.current) {
+          clearTimeout(timeoutTimer.current);
+          timeoutTimer.current = null;
+        }
+
+        // If there's a cached request, schedule it for 100ms later
+        if (cachedRequest.current) {
+          const requestToSend = cachedRequest.current;
+          cachedRequest.current = null;
+
+          postResponseTimer.current = setTimeout(() => {
+            sendWorkerRequest(requestToSend);
+          }, 100);
+        }
       };
 
       return () => {
         workerRef.current?.terminate();
         workerRef.current = null;
+        if (postResponseTimer.current) clearTimeout(postResponseTimer.current);
+        if (timeoutTimer.current) clearTimeout(timeoutTimer.current);
       };
     }
   }, [isEditMode]);
 
-  // Trigger worker diff computation with debounce
+  // Helper function to send worker request
+  const sendWorkerRequest = useCallback((request: DiffWorkerRequest) => {
+    if (!workerRef.current) return;
+
+    pendingRequest.current = request;
+    lastRequestTime.current = Date.now();
+    workerRef.current.postMessage(request);
+
+    // Set timeout timer for 3 seconds
+    if (timeoutTimer.current) clearTimeout(timeoutTimer.current);
+    timeoutTimer.current = setTimeout(() => {
+      // Timeout reached, if there's a cached request, send it
+      if (cachedRequest.current) {
+        const requestToSend = cachedRequest.current;
+        cachedRequest.current = null;
+        pendingRequest.current = null;
+        sendWorkerRequest(requestToSend);
+      }
+    }, 3000);
+  }, []);
+
+  // Trigger worker diff computation with advanced debounce
   useEffect(() => {
     if (!isEditMode || !workerRef.current) return;
 
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    const request: DiffWorkerRequest = {
+      text1: editableLeft,
+      text2: editableRight,
+      editCost,
+      cleanupMode
+    };
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime.current;
+    const timeSinceLastResponse = now - lastResponseTime.current;
+
+    // Clear any pending post-response timer
+    if (postResponseTimer.current) {
+      clearTimeout(postResponseTimer.current);
+      postResponseTimer.current = null;
     }
 
-    debounceTimerRef.current = setTimeout(() => {
-      const request: DiffWorkerRequest = {
-        text1: editableLeft,
-        text2: editableRight,
-        editCost,
-        cleanupMode
-      };
-      workerRef.current?.postMessage(request);
-    }, 300);
+    // Check if we should send immediately
+    const shouldSendImmediately =
+      !pendingRequest.current && // No pending request
+      (timeSinceLastResponse >= 100 || lastResponseTime.current === 0); // 100ms since last response or no response yet
 
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
+    const shouldTimeoutAndSend =
+      pendingRequest.current && // There is a pending request
+      timeSinceLastRequest >= 3000; // 3 seconds since last request
+
+    if (shouldSendImmediately) {
+      sendWorkerRequest(request);
+    } else if (shouldTimeoutAndSend) {
+      // Timeout reached, send new request
+      cachedRequest.current = null;
+      sendWorkerRequest(request);
+    } else {
+      // Cache the request for later
+      cachedRequest.current = request;
+    }
   }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode]);
 
   // Use worker diff in edit mode, regular diff otherwise
