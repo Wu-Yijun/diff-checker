@@ -35,6 +35,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const postResponseTimer = useRef<NodeJS.Timeout | null>(null);
   const timeoutTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Scroll container refs for synchronized scrolling
+  const leftScrollRef = useRef<HTMLDivElement | null>(null);
+  const rightScrollRef = useRef<HTMLDivElement | null>(null);
+
   // Initialize editable content when snippets change
   useEffect(() => {
     if (leftSnippet) setEditableLeft(leftSnippet.content);
@@ -392,6 +396,60 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     return style;
   };
 
+  // Handle hover with synchronized scrolling
+  const handleHoverEnter = useCallback((index: number, side: 'left' | 'right') => {
+    setHoveredIndex(index);
+
+    const pairIndex = getPairIndex(index);
+
+    // Calculate scroll position based on equal parts position
+    const targetSide = side === 'left' ? 'right' : 'left';
+    const scrollContainer = targetSide === 'left' ? leftScrollRef.current : rightScrollRef.current;
+    const sourceContainer = side === 'left' ? leftScrollRef.current : rightScrollRef.current;
+
+    if (!scrollContainer || !sourceContainer) return;
+
+    // Find the hovered element in source
+    const sourceElement = sourceContainer.querySelector(`[data-diff-index="${index}"]`) as HTMLElement;
+    if (!sourceElement) return;
+
+    // Calculate the cumulative character position up to this index (only counting 'equal' parts)
+    let charOffset = 0;
+    for (let i = 0; i < index; i++) {
+      if (diff[i].type === 'equal') {
+        charOffset += diff[i].value.length;
+      }
+    }
+
+    // Find the target element - if paired, use pair index, otherwise find by char offset
+    let targetElement: HTMLElement | null = null;
+
+    if (pairIndex !== null) {
+      targetElement = scrollContainer.querySelector(`[data-diff-index="${pairIndex}"]`) as HTMLElement;
+    }
+
+    // If we have a target element, scroll to it
+    if (targetElement) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const elementRect = targetElement.getBoundingClientRect();
+
+      // Check if element is not fully visible
+      const isAbove = elementRect.top < containerRect.top + 50; // Add some padding
+      const isBelow = elementRect.bottom > containerRect.bottom - 50;
+
+      if (isAbove || isBelow) {
+        // Calculate relative position in source container
+        const sourceRect = sourceContainer.getBoundingClientRect();
+        const sourceElementRect = sourceElement.getBoundingClientRect();
+        const relativePositionInSource = (sourceElementRect.top - sourceRect.top + sourceContainer.scrollTop) / sourceContainer.scrollHeight;
+
+        // Apply same relative position to target container
+        const targetScrollTop = relativePositionInSource * scrollContainer.scrollHeight - (scrollContainer.clientHeight / 3);
+        scrollContainer.scrollTo({ top: Math.max(0, targetScrollTop), behavior: 'smooth' });
+      }
+    }
+  }, [diff]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
       {/* Stats Bar */}
@@ -450,7 +508,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
+          <div ref={leftScrollRef} className="flex-1 overflow-auto custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
             <div className="relative min-h-full p-4 font-mono text-sm leading-6">
               {/* Edit Mode Textarea Overlay */}
               {isEditMode && (
@@ -471,9 +529,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                     return (
                       <span
                         key={index}
+                        data-diff-index={index}
                         className={`absolute -translate-x-1  inline-block bg-red-500/70 dark:bg-red-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
                         title="Missing content (Right Click to add)"
-                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseEnter={() => handleHoverEnter(index, 'left')}
                         onMouseLeave={() => setHoveredIndex(null)}
                         onClick={() => handleDiffClick(index, part, 'left')}
                       >
@@ -490,8 +549,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
+                      data-diff-index={index}
                       className={`${baseClass} ${getHighlightClass(index)}`}
-                      onMouseEnter={() => setHoveredIndex(index)}
+                      onMouseEnter={() => handleHoverEnter(index, 'left')}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'left')}
                     >
@@ -533,7 +593,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
+          <div ref={rightScrollRef} className="flex-1 overflow-auto bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
             <div className="relative min-h-full p-4 font-mono text-sm leading-6">
               {/* Edit Mode Textarea Overlay */}
               {isEditMode && (
@@ -554,9 +614,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                     return (
                       <span
                         key={index}
+                        data-diff-index={index}
                         className={`absolute -translate-x-1 inline-block bg-green-500/70 dark:bg-green-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
                         title="Missing content (Right Click to add)"
-                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseEnter={() => handleHoverEnter(index, 'right')}
                         onMouseLeave={() => setHoveredIndex(null)}
                         onClick={() => handleDiffClick(index, part, 'right')}
                       >
@@ -573,8 +634,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
+                      data-diff-index={index}
                       className={`${baseClass} ${getHighlightClass(index)}`}
-                      onMouseEnter={() => setHoveredIndex(index)}
+                      onMouseEnter={() => handleHoverEnter(index, 'right')}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'right')}
                     >
