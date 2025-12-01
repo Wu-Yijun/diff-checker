@@ -152,6 +152,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const handleTextareaChange = useCallback((side: 'left' | 'right', value: string) => {
     if (side === 'left') {
       setEditableLeft(value);
+      if (leftSnippet.id === rightSnippet.id) setEditableRight(value);
       if (leftSnippet) {
         // Debounce snippet update
         if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
@@ -161,6 +162,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
       }
     } else {
       setEditableRight(value);
+      if (leftSnippet.id === rightSnippet.id) setEditableLeft(value);
       if (rightSnippet) {
         // Debounce snippet update
         if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
@@ -308,14 +310,19 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     );
   }
 
-  const getHighlightClass = (index: number) => {
+  const getHighlightClass = (index: number, relative = true) => {
     const pairIndex = getPairIndex(index);
     const isHovered = hoveredIndex === index || (pairIndex !== null && hoveredIndex === pairIndex);
+    let style = "";
 
     if (isCtrlPressed && isHovered) {
-      return 'ring-2 ring-yellow-400/50 z-10 relative cursor-pointer';
+      style += "cursor-pointer ";
     }
-    return '';
+    if (isHovered) {
+      style += 'ring-4 ring-yellow-400/50 z-20 ';
+      if (relative) style += " relative";
+    }
+    return style;
   };
 
   return (
@@ -382,11 +389,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               <textarea
                 value={editableLeft}
                 onChange={(e) => handleTextareaChange('left', e.target.value)}
-                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
+                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
                 spellCheck={false}
               />
             )}
-            <div className="whitespace-pre-wrap break-words">
+            <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
               {diff.map((part, index) => {
                 // For 'insert', check if it's paired with a previous delete
                 if (part.type === 'insert') {
@@ -396,20 +403,21 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
-                      className={`inline-block bg-green-100 dark:bg-green-900/40 w-2 h-4 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index)}`}
-                      title="Missing content (Click to add)"
+                      className={`absolute -translate-x-1  inline-block bg-red-500 dark:bg-red-500 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
+                      title="Missing content (Right Click to add)"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'left')}
                     >
-                      &nbsp;
+
                     </span>
                   );
                 }
 
-                const baseClass = part.type === 'delete'
-                  ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 rounded-[2px] border-b-2 border-red-200 dark:border-red-800"
-                  : "text-gray-600 dark:text-gray-400";
+                const baseClass = part.type === 'delete' ?
+                  ("bg-red-100 dark:bg-red-900/40 rounded-[2px] border-b-2 border-red-200 dark:border-red-800 "
+                    + (isEditMode ? "text-gray-500/0 " : "text-red-800 dark:text-red-200 "))
+                  : (isEditMode ? "text-gray-500/0 " : "text-gray-600 dark:text-gray-400");
 
                 return (
                   <span
@@ -456,17 +464,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               Paste
             </button>
           </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
+          <div className="flex-1 overflow-auto p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
             {/* Edit Mode Textarea Overlay */}
             {isEditMode && (
               <textarea
                 value={editableRight}
                 onChange={(e) => handleTextareaChange('right', e.target.value)}
-                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
+                className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10"
                 spellCheck={false}
               />
             )}
-            <div className="whitespace-pre-wrap break-words">
+            <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
               {diff.map((part, index) => {
                 // For 'delete', check if it's paired with a next insert
                 if (part.type === 'delete') {
@@ -476,20 +484,21 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
-                      className={`inline-block bg-red-100 dark:bg-red-900/40 w-2 h-4 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index)}`}
-                      title="Missing content (Click to add)"
+                      className={`absolute -translate-x-1 inline-block bg-green-500 dark:bg-green-500 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
+                      title="Missing content (Right Click to add)"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() => handleDiffClick(index, part, 'right')}
                     >
-                      &nbsp;
+
                     </span>
                   );
                 }
 
-                const baseClass = part.type === 'insert'
-                  ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 rounded-[2px] border-b-2 border-green-200 dark:border-green-800"
-                  : "text-gray-600 dark:text-gray-400";
+                const baseClass = part.type === 'insert' ?
+                  ("bg-green-100 dark:bg-green-900/40 rounded-[2px] border-b-2 border-green-200 dark:border-green-800 "
+                    + (isEditMode ? "text-gray-500/0" : "text-green-800 dark:text-green-200"))
+                  : (isEditMode ? "text-gray-500/0" : "text-gray-600 dark:text-gray-400");
 
                 return (
                   <span
