@@ -1,5 +1,4 @@
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
-import { computeDiff } from '../services/diffService';
 import { DiffPart, Snippet } from '../types';
 import { ClipboardIcon } from './Icons';
 import type { DiffWorkerRequest, DiffWorkerResponse } from '../workers/diff.worker';
@@ -47,71 +46,71 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
 
   // Initialize web worker
   useEffect(() => {
-    if (isEditMode) {
-      workerRef.current = new Worker(new URL('../workers/diff.worker.ts', import.meta.url), { type: 'module' });
+    workerRef.current = new Worker(new URL('../workers/diff.worker.ts', import.meta.url), { type: 'module' });
+    workerRef.current.onmessage = (e: MessageEvent<DiffWorkerResponse>) => {
+      const { parts, timestamp } = e.data;
+      // Only update if this is a newer result
+      if (timestamp >= lastWorkerTimestamp.current) {
+        lastWorkerTimestamp.current = timestamp;
+        setWorkerDiff(parts);
+      }
 
-      workerRef.current.onmessage = (e: MessageEvent<DiffWorkerResponse>) => {
-        const { parts, timestamp } = e.data;
-        // Only update if this is a newer result
-        if (timestamp >= lastWorkerTimestamp.current) {
-          lastWorkerTimestamp.current = timestamp;
-          setWorkerDiff(parts);
-        }
+      // Mark response received
+      lastResponseTime.current = Date.now();
 
-        // Mark response received
-        lastResponseTime.current = Date.now();
+      // Clear timeout timer
+      if (timeoutTimer.current) {
+        clearTimeout(timeoutTimer.current);
+        timeoutTimer.current = null;
+      }
+
+      if (cachedRequest.current === pendingRequest.current) {
+        cachedRequest.current = null;
         pendingRequest.current = null;
+        return;
+      }
 
-        // Clear timeout timer
-        if (timeoutTimer.current) {
-          clearTimeout(timeoutTimer.current);
-          timeoutTimer.current = null;
-        }
+      if (postResponseTimer.current) clearTimeout(postResponseTimer.current);
+      postResponseTimer.current = setTimeout(() => {
+        sendWorkerRequest();
+      }, 100);
 
-        // If there's a cached request, schedule it for 100ms later
-        if (cachedRequest.current) {
-          const requestToSend = cachedRequest.current;
-          cachedRequest.current = null;
+    };
 
-          postResponseTimer.current = setTimeout(() => {
-            sendWorkerRequest(requestToSend);
-          }, 100);
-        }
-      };
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      console.log("Clear postResponseTimer");
+      if (postResponseTimer.current) clearTimeout(postResponseTimer.current);
+      if (timeoutTimer.current) clearTimeout(timeoutTimer.current);
+      cachedRequest.current = null;
+      pendingRequest.current = null;
+    };
+  }, []);
 
-      return () => {
-        workerRef.current?.terminate();
-        workerRef.current = null;
-        if (postResponseTimer.current) clearTimeout(postResponseTimer.current);
-        if (timeoutTimer.current) clearTimeout(timeoutTimer.current);
-      };
-    }
-  }, [isEditMode]);
-
-  // Helper function to send worker request
-  const sendWorkerRequest = useCallback((request: DiffWorkerRequest) => {
+  // Helper function to send worker request, if there's a cached request, send it
+  const sendWorkerRequest = useCallback(() => {
     if (!workerRef.current) return;
 
-    pendingRequest.current = request;
+    if (!cachedRequest.current) return;
+    pendingRequest.current = cachedRequest.current;
     lastRequestTime.current = Date.now();
-    workerRef.current.postMessage(request);
 
+    workerRef.current.postMessage(cachedRequest.current);
+
+    if (postResponseTimer.current) { clearTimeout(postResponseTimer.current); postResponseTimer.current = null }
     // Set timeout timer for 3 seconds
     if (timeoutTimer.current) clearTimeout(timeoutTimer.current);
     timeoutTimer.current = setTimeout(() => {
       // Timeout reached, if there's a cached request, send it
-      if (cachedRequest.current) {
-        const requestToSend = cachedRequest.current;
-        cachedRequest.current = null;
-        pendingRequest.current = null;
-        sendWorkerRequest(requestToSend);
-      }
+      sendWorkerRequest();
     }, 3000);
   }, []);
 
   // Trigger worker diff computation with advanced debounce
   useEffect(() => {
-    if (!isEditMode || !workerRef.current) return;
+    if (!workerRef.current) return;
+    // if (!isEditMode || !workerRef.current) return;
 
     const request: DiffWorkerRequest = {
       text1: editableLeft,
@@ -124,49 +123,43 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     const timeSinceLastRequest = now - lastRequestTime.current;
     const timeSinceLastResponse = now - lastResponseTime.current;
 
-    // Clear any pending post-response timer
-    if (postResponseTimer.current) {
-      clearTimeout(postResponseTimer.current);
-      postResponseTimer.current = null;
+    cachedRequest.current = request;
+    if (timeSinceLastRequest > 3000) {
+      sendWorkerRequest();
+      return;
     }
-
-    // Check if we should send immediately
-    const shouldSendImmediately =
-      !pendingRequest.current && // No pending request
-      (timeSinceLastResponse >= 100 || lastResponseTime.current === 0); // 100ms since last response or no response yet
-
-    const shouldTimeoutAndSend =
-      pendingRequest.current && // There is a pending request
-      timeSinceLastRequest >= 3000; // 3 seconds since last request
-
-    if (shouldSendImmediately) {
-      sendWorkerRequest(request);
-    } else if (shouldTimeoutAndSend) {
-      // Timeout reached, send new request
-      cachedRequest.current = null;
-      sendWorkerRequest(request);
-    } else {
-      // Cache the request for later
-      cachedRequest.current = request;
+    if (timeSinceLastResponse < 100) {
+      if (postResponseTimer.current === null && !pendingRequest.current) {
+        postResponseTimer.current = setTimeout(() => {
+          sendWorkerRequest();
+        }, 100 - timeSinceLastResponse);
+      }
+      return;
     }
+    if (!pendingRequest.current) {
+      sendWorkerRequest();
+      return;
+    }
+    return;
+
   }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode]);
 
-  // Use worker diff in edit mode, regular diff otherwise
-  const diff = useMemo(() => {
-    if (isEditMode) return workerDiff;
-    if (!leftSnippet || !rightSnippet) return [];
-    return computeDiff(leftSnippet.content, rightSnippet.content, editCost, cleanupMode);
-  }, [isEditMode, workerDiff, leftSnippet, rightSnippet, editCost, cleanupMode]);
+  // // Use worker diff in edit mode, regular diff otherwise
+  // const diff = useMemo(() => {
+  //   if (isEditMode) return workerDiff;
+  //   if (!leftSnippet || !rightSnippet) return [];
+  //   return computeDiff(leftSnippet.content, rightSnippet.content, editCost, cleanupMode);
+  // }, [isEditMode, workerDiff, leftSnippet, rightSnippet, editCost, cleanupMode]);
 
   const stats = useMemo(() => {
     let added = 0;
     let removed = 0;
-    diff.forEach(part => {
+    workerDiff.forEach(part => {
       if (part.type === 'insert') added += part.value.length;
       if (part.type === 'delete') removed += part.value.length;
     });
     return { added, removed };
-  }, [diff]);
+  }, [workerDiff]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -245,9 +238,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   }, [leftSnippet, rightSnippet, onUpdateSnippet]);
 
   const getPairIndex = (index: number) => {
-    const part = diff[index];
-    if (part.type === 'delete' && diff[index + 1]?.type === 'insert') return index + 1;
-    if (part.type === 'insert' && diff[index - 1]?.type === 'delete') return index - 1;
+    const part = workerDiff[index];
+    if (part.type === 'delete' && workerDiff[index + 1]?.type === 'insert') return index + 1;
+    if (part.type === 'insert' && workerDiff[index - 1]?.type === 'delete') return index - 1;
     return null;
   };
 
@@ -255,14 +248,14 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     if (!isCtrlPressed) return;
 
     const pairIndex = getPairIndex(index);
-    const pairPart = pairIndex !== null ? diff[pairIndex] : null;
+    const pairPart = pairIndex !== null ? workerDiff[pairIndex] : null;
 
     // Left Side Actions
     if (side === 'left') {
       if (part.type === 'delete' && leftSnippet) {
         // If paired with insert (modified region), replace delete content with insert content
         if (pairPart && pairPart.type === 'insert') {
-          const newContent = diff
+          const newContent = workerDiff
             .map((p, i) => {
               if (p.type === 'equal') return p.value;
               if (p.type === 'delete') {
@@ -275,7 +268,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
           onUpdateSnippet(leftSnippet.id, newContent);
         } else {
           // Standard delete removal
-          const newContent = diff
+          const newContent = workerDiff
             .filter((p, i) => {
               if (i === index) return false;
               return p.type === 'equal' || p.type === 'delete';
@@ -286,7 +279,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
         }
       } else if (part.type === 'insert' && leftSnippet) {
         // Add 'insert' part to Left (from placeholder)
-        const newContent = diff
+        const newContent = workerDiff
           .filter((p, i) => {
             if (i === index) return true;
             return p.type === 'equal' || p.type === 'delete';
@@ -305,7 +298,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
           // Reconstruct Right content.
           // Right = Equal + Insert.
           // We want New Right = Equal + Delete.
-          const newContent = diff
+          const newContent = workerDiff
             .map((p, i) => {
               if (p.type === 'equal') return p.value;
               if (p.type === 'insert') {
@@ -318,7 +311,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
           onUpdateSnippet(rightSnippet.id, newContent);
         } else {
           // Standard insert removal
-          const newContent = diff
+          const newContent = workerDiff
             .filter((p, i) => {
               if (i === index) return false;
               return p.type === 'equal' || p.type === 'insert';
@@ -329,7 +322,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
         }
       } else if (part.type === 'delete' && rightSnippet) {
         // Add 'delete' part to Right (from placeholder)
-        const newContent = diff
+        const newContent = workerDiff
           .filter((p, i) => {
             if (i === index) return true;
             return p.type === 'equal' || p.type === 'insert';
@@ -400,7 +393,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const handleHoverEnter = useCallback((index: number, side: 'left' | 'right') => {
     setHoveredIndex(index);
 
-    const pairIndex = getPairIndex(index) ?? index;
+    let pairIndex = index;
+    if (workerDiff[index].type === 'delete' && workerDiff[index + 1]?.type === 'insert') pairIndex = index + 1;
+    if (workerDiff[index].type === 'insert' && workerDiff[index - 1]?.type === 'delete') pairIndex = index - 1;
 
     // Scroll the opposite side to show the paired element
     const targetSide = side === 'left' ? 'right' : 'left';
@@ -421,7 +416,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
         scrollContainer.scrollTo({ top: scrollTop, behavior: 'smooth' });
       }
     }
-  }, []);
+  }, [workerDiff]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
@@ -493,11 +488,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                 />
               )}
               <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
-                {diff.map((part, index) => {
+                {workerDiff.map((part, index) => {
                   // For 'insert', check if it's paired with a previous delete
                   if (part.type === 'insert') {
                     // If paired, DO NOT show placeholder
-                    if (diff[index - 1]?.type === 'delete') return null;
+                    if (workerDiff[index - 1]?.type === 'delete') return null;
 
                     return (
                       <span
@@ -578,11 +573,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                 />
               )}
               <div className={"whitespace-pre-wrap break-words " + (isEditMode ? "select-none " : "")} >
-                {diff.map((part, index) => {
+                {workerDiff.map((part, index) => {
                   // For 'delete', check if it's paired with a next insert
                   if (part.type === 'delete') {
                     // If paired, DO NOT show placeholder
-                    if (diff[index + 1]?.type === 'insert') return null;
+                    if (workerDiff[index + 1]?.type === 'insert') return null;
 
                     return (
                       <span
