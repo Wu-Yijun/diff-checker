@@ -39,7 +39,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   useEffect(() => {
     if (leftSnippet) setEditableLeft(leftSnippet.content);
     if (rightSnippet) setEditableRight(rightSnippet.content);
-  }, [leftSnippet?.id, rightSnippet?.id]);
+  }, [leftSnippet?.id, leftSnippet?.content, rightSnippet?.id, rightSnippet?.content]);
 
   // Initialize web worker
   useEffect(() => {
@@ -470,7 +470,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
-                      className={`absolute -translate-x-1  inline-block bg-red-500 dark:bg-red-500 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
+                      className={`absolute -translate-x-1  inline-block bg-red-500/70 dark:bg-red-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
                       title="Missing content (Right Click to add)"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
@@ -551,7 +551,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
                   return (
                     <span
                       key={index}
-                      className={`absolute -translate-x-1 inline-block bg-green-500 dark:bg-green-500 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
+                      className={`absolute -translate-x-1 inline-block bg-green-500/70 dark:bg-green-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
                       title="Missing content (Right Click to add)"
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
