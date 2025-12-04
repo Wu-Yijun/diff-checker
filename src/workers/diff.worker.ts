@@ -27,11 +27,41 @@ function computeDiff(text1: string, text2: string, editCost: number = 4, cleanup
   });
 };
 
+/**
+ * Split diff parts by newlines when splitByLine is enabled.
+ * Each part will be split at newline boundaries, preserving the newline character.
+ */
+function split_diff_parts(parts: DiffPart[], splitByLine: boolean): DiffPart[] {
+  if (!splitByLine) return parts;
+
+  const result: DiffPart[] = [];
+
+  for (const part of parts) {
+    const lines = part.value.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const isLastLine = i === lines.length - 1;
+
+      // Add the line content (if not empty or if it's the last line)
+      if (line.length > 0 || !isLastLine) {
+        result.push({
+          type: part.type,
+          value: line + (isLastLine ? '' : '\n')
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 export interface DiffWorkerRequest {
   text1: string;
   text2: string;
   editCost: number;
   cleanupMode: 'semantic' | 'efficiency';
+  splitByLine: boolean;
 }
 
 export interface DiffWorkerResponse {
@@ -41,12 +71,13 @@ export interface DiffWorkerResponse {
 
 // Listen for messages from the main thread
 self.addEventListener('message', (e: MessageEvent<DiffWorkerRequest>) => {
-  const { text1, text2, editCost, cleanupMode } = e.data;
+  const { text1, text2, editCost, cleanupMode, splitByLine } = e.data;
 
   try {
     const parts = computeDiff(text1, text2, editCost, cleanupMode);
+    const processedParts = split_diff_parts(parts, splitByLine);
     const response: DiffWorkerResponse = {
-      parts,
+      parts: processedParts,
       timestamp: Date.now()
     };
 

@@ -11,9 +11,10 @@ interface DiffViewerProps {
   cleanupMode: 'semantic' | 'efficiency';
   onSnippetDrop: (side: 'left' | 'right', snippetId: string) => void;
   isEditMode: boolean;
+  splitByLine: boolean;
 }
 
-export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop, isEditMode }) => {
+export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop, isEditMode, splitByLine }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = React.useState(false);
   const [dragOverSide, setDragOverSide] = React.useState<'left' | 'right' | null>(null);
@@ -116,7 +117,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
       text1: editableLeft,
       text2: editableRight,
       editCost,
-      cleanupMode
+      cleanupMode,
+      splitByLine
     };
 
     const now = Date.now();
@@ -142,7 +144,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     }
     return;
 
-  }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode]);
+  }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode, splitByLine]);
 
   // // Use worker diff in edit mode, regular diff otherwise
   // const diff = useMemo(() => {
