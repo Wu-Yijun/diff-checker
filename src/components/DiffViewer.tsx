@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { DiffPart, Snippet } from '../types';
-import { ClipboardIcon } from './Icons';
+import { ClipboardIcon, CopyIcon } from './Icons';
 import type { DiffWorkerRequest, DiffWorkerResponse } from '../workers/diff.worker';
 
 interface DiffViewerProps {
@@ -199,19 +199,41 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
     }
   };
 
+  // Sanitize text by removing invalid characters like \r
+  const sanitizeText = (text: string): string => {
+    // Remove \r (carriage return) and other characters that can't be typed in textarea
+    return text.replace(/\r/g, '');
+  };
+
   const handlePaste = async (id: string) => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
+        const sanitized = sanitizeText(text);
         if (isEditMode) {
           // Update editable state in edit mode
-          if (leftSnippet?.id === id) setEditableLeft(text);
-          if (rightSnippet?.id === id) setEditableRight(text);
+          if (leftSnippet?.id === id) setEditableLeft(sanitized);
+          if (rightSnippet?.id === id) setEditableRight(sanitized);
         }
-        onUpdateSnippet(id, text);
+        onUpdateSnippet(id, sanitized);
       }
     } catch (err) {
       console.error('Failed to read clipboard:', err);
+      alert('Could not access clipboard. Please ensure you have granted permission.');
+    }
+  };
+
+  const handleCopy = async (id: string) => {
+    try {
+      let content = '';
+      if (leftSnippet?.id === id) content = leftSnippet.content;
+      else if (rightSnippet?.id === id) content = rightSnippet.content;
+
+      if (content) {
+        await navigator.clipboard.writeText(content);
+      }
+    } catch (err) {
+      console.error('Failed to write to clipboard:', err);
       alert('Could not access clipboard. Please ensure you have granted permission.');
     }
   };
@@ -511,14 +533,24 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Original (Left)</span>
               <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{leftSnippet.title}</span>
             </div>
-            <button
-              onClick={() => handlePaste(leftSnippet.id)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-              title="Paste from clipboard and replace content"
-            >
-              <ClipboardIcon className="w-3 h-3" />
-              Paste
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCopy(leftSnippet.id)}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
+                title="Copy content to clipboard"
+              >
+                <CopyIcon className="w-3 h-3" />
+                Copy
+              </button>
+              <button
+                onClick={() => handlePaste(leftSnippet.id)}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
+                title="Paste from clipboard and replace content"
+              >
+                <ClipboardIcon className="w-3 h-3" />
+                Paste
+              </button>
+            </div>
           </div>
           <div ref={leftScrollRef} className="flex-1 overflow-auto custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
             <div className="relative min-h-full p-4 font-mono text-sm leading-6" style={{ paddingBottom: 'calc(33.33vh)' }}>
@@ -596,14 +628,24 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Modified (Right)</span>
               <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{rightSnippet.title}</span>
             </div>
-            <button
-              onClick={() => handlePaste(rightSnippet.id)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-              title="Paste from clipboard and replace content"
-            >
-              <ClipboardIcon className="w-3 h-3" />
-              Paste
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCopy(rightSnippet.id)}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
+                title="Copy content to clipboard"
+              >
+                <CopyIcon className="w-3 h-3" />
+                Copy
+              </button>
+              <button
+                onClick={() => handlePaste(rightSnippet.id)}
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
+                title="Paste from clipboard and replace content"
+              >
+                <ClipboardIcon className="w-3 h-3" />
+                Paste
+              </button>
+            </div>
           </div>
           <div ref={rightScrollRef} className="flex-1 overflow-auto bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
             <div className="relative min-h-full p-4 font-mono text-sm leading-6" style={{ paddingBottom: 'calc(33.33vh)' }}>
