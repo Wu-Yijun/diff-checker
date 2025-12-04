@@ -477,13 +477,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
             </button>
           </div>
           <div ref={leftScrollRef} className="flex-1 overflow-auto custom-scrollbar bg-white dark:bg-gray-950 transition-colors duration-200 relative">
-            <div className="relative min-h-full p-4 font-mono text-sm leading-6">
+            <div className="relative min-h-full p-4 font-mono text-sm leading-6" style={{ paddingBottom: 'calc(33.33vh)' }}>
               {/* Edit Mode Textarea Overlay */}
               {isEditMode && (
                 <textarea
                   value={editableLeft}
                   onChange={(e) => handleTextareaChange('left', e.target.value)}
-                  className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
+                  className="absolute overflow-hidden inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
                   spellCheck={false}
                 />
               )}
@@ -562,13 +562,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
             </button>
           </div>
           <div ref={rightScrollRef} className="flex-1 overflow-auto bg-white dark:bg-gray-950 custom-scrollbar transition-colors duration-200 relative">
-            <div className="relative min-h-full p-4 font-mono text-sm leading-6">
+            <div className="relative min-h-full p-4 font-mono text-sm leading-6" style={{ paddingBottom: 'calc(33.33vh)' }}>
               {/* Edit Mode Textarea Overlay */}
               {isEditMode && (
                 <textarea
                   value={editableRight}
                   onChange={(e) => handleTextareaChange('right', e.target.value)}
-                  className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
+                  className="absolute overflow-hidden inset-0 w-full h-full p-4 font-mono text-sm leading-6 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 z-10 bg-transparent"
                   spellCheck={false}
                 />
               )}
