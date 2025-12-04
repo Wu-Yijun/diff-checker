@@ -217,34 +217,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6">
-            {/* Edit Mode Toggle */}
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${isEditMode
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
-                }`}
-              title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
-            >
-              {isEditMode ? <ViewModeIcon className="w-4 h-4" /> : <EditModeIcon className="w-4 h-4" />}
-              <span>{isEditMode ? 'View' : 'Edit'}</span>
-            </button>
-
-            {/* Split By Line Toggle */}
-            <button
-              onClick={() => setSplitByLine(!splitByLine)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${splitByLine
-                ? 'bg-green-600 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
-                }`}
-              title={splitByLine ? 'Disable Line Split' : 'Enable Line Split'}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-              <span>{splitByLine ? 'Line' : 'Char'}</span>
-            </button>
-
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -299,6 +271,8 @@ export default function App() {
           onSnippetDrop={handleSnippetDrop}
           isEditMode={isEditMode}
           splitByLine={splitByLine}
+          onEditModeChange={setIsEditMode}
+          onSplitByLineChange={setSplitByLine}
         />
       </div>
 

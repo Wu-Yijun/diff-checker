@@ -12,9 +12,11 @@ interface DiffViewerProps {
   onSnippetDrop: (side: 'left' | 'right', snippetId: string) => void;
   isEditMode: boolean;
   splitByLine: boolean;
+  onEditModeChange: (enabled: boolean) => void;
+  onSplitByLineChange: (enabled: boolean) => void;
 }
 
-export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop, isEditMode, splitByLine }) => {
+export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippet, onUpdateSnippet, editCost, cleanupMode, onSnippetDrop, isEditMode, splitByLine, onEditModeChange, onSplitByLineChange }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = React.useState(false);
   const [dragOverSide, setDragOverSide] = React.useState<'left' | 'right' | null>(null);
@@ -423,7 +425,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
       {/* Stats Bar */}
-      <div className="h-12 border-b border-gray-200 dark:border-gray-800 flex items-center px-6 gap-6 bg-white/50 dark:bg-gray-900/50 backdrop-blur transition-colors duration-200">
+      <div className="h-12 border-b border-gray-200 dark:border-gray-800 flex items-center px-6 gap-6 bg-white/50 dark:bg-gray-900/50 backdrop-blur transition-colors duration-200 relative">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.removed} chars removed</span>
@@ -433,8 +435,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.added} chars added</span>
         </div>
 
-        {/* Snippet Indicators */}
-        <div className="ml-auto flex items-center gap-3 text-sm bg-gray-100 dark:bg-gray-950 py-1.5 px-3 rounded-full border border-gray-200 dark:border-gray-800">
+        {/* Snippet Indicators - Centered */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 text-sm bg-gray-100 dark:bg-gray-950 py-1.5 px-3 rounded-full border border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2 max-w-[150px]">
             <span className="w-2 h-2 rounded-full bg-gray-400"></span>
             <span className="truncate text-gray-600 dark:text-gray-300">{leftSnippet ? leftSnippet.title : 'None'}</span>
@@ -444,6 +446,46 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
             <span className="truncate text-gray-600 dark:text-gray-300">{rightSnippet ? rightSnippet.title : 'None'}</span>
           </div>
+        </div>
+
+        {/* Toggle Buttons - Right Side */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Edit Mode Toggle */}
+          <button
+            onClick={() => onEditModeChange(!isEditMode)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-xs transition-colors ${isEditMode
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
+              }`}
+            title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {isEditMode ? (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </>
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              )}
+            </svg>
+            <span>{isEditMode ? 'View' : 'Edit'}</span>
+          </button>
+
+          {/* Split By Line Toggle */}
+          <button
+            onClick={() => onSplitByLineChange(!splitByLine)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-xs transition-colors ${splitByLine
+              ? 'bg-green-600 text-white shadow-md'
+              : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
+              }`}
+            title={splitByLine ? 'Disable Line Split' : 'Enable Line Split'}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span>{splitByLine ? 'Line' : 'Char'}</span>
+          </button>
         </div>
       </div>
 
