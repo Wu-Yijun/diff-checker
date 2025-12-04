@@ -41,6 +41,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   const leftScrollRef = useRef<HTMLDivElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Refs to store scroll positions when splitByLine changes
+  const savedLeftScroll = useRef<number>(0);
+  const savedRightScroll = useRef<number>(0);
+  const previousSplitByLine = useRef<boolean>(splitByLine);
+
   // Initialize editable content when snippets change
   useEffect(() => {
     if (leftSnippet) setEditableLeft(leftSnippet.content);
@@ -56,6 +61,18 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
       if (timestamp >= lastWorkerTimestamp.current) {
         lastWorkerTimestamp.current = timestamp;
         setWorkerDiff(parts);
+
+        // Restore scroll positions after diff update if splitByLine changed
+        requestAnimationFrame(() => {
+          if (leftScrollRef.current && savedLeftScroll.current > 0) {
+            leftScrollRef.current.scrollTop = savedLeftScroll.current;
+            savedLeftScroll.current = 0;
+          }
+          if (rightScrollRef.current && savedRightScroll.current > 0) {
+            rightScrollRef.current.scrollTop = savedRightScroll.current;
+            savedRightScroll.current = 0;
+          }
+        });
       }
 
       // Mark response received
@@ -114,6 +131,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ leftSnippet, rightSnippe
   useEffect(() => {
     if (!workerRef.current) return;
     // if (!isEditMode || !workerRef.current) return;
+
+    // Save scroll positions if only splitByLine is changing
+    if (previousSplitByLine.current !== splitByLine) {
+      if (leftScrollRef.current) {
+        savedLeftScroll.current = leftScrollRef.current.scrollTop;
+      }
+      if (rightScrollRef.current) {
+        savedRightScroll.current = rightScrollRef.current.scrollTop;
+      }
+      previousSplitByLine.current = splitByLine;
+    }
 
     const request: DiffWorkerRequest = {
       text1: editableLeft,
