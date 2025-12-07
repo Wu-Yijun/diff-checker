@@ -216,7 +216,10 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans selection:bg-blue-500/30 transition-colors duration-200">
       {/* Sidebar - Snippet Manager */}
-      <div className="w-80 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 flex-shrink-0 z-10 transition-colors duration-200">
+      <div
+        className="w-80 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 flex-shrink-0 z-10 transition-colors duration-200"
+        onClick={() => setSelectedPanel(null)}
+      >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h1 className="font-bold text-gray-900 dark:text-gray-100 text-lg tracking-tight">Different Checker</h1>
         </div>
@@ -241,7 +244,10 @@ export default function App() {
                 e.dataTransfer.setData('snippetId', snippet.id);
                 e.dataTransfer.effectAllowed = 'copy';
               }}
-              onClick={() => handleSnippetClick(snippet.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSnippetClick(snippet.id);
+              }}
               className={`group p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${(leftId === snippet.id || rightId === snippet.id)
                 ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-sm'
                 : 'bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
@@ -274,7 +280,7 @@ export default function App() {
               {/* Selection Controls */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => setLeftId(snippet.id)}
+                  onClick={(e) => { e.stopPropagation(); setLeftId(snippet.id); }}
                   className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${leftId === snippet.id
                     ? 'bg-blue-600 text-white shadow-inner'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
@@ -283,7 +289,7 @@ export default function App() {
                   Set Left
                 </button>
                 <button
-                  onClick={() => setRightId(snippet.id)}
+                  onClick={(e) => { e.stopPropagation(); setRightId(snippet.id); }}
                   className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${rightId === snippet.id
                     ? 'bg-blue-600 text-white shadow-inner'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
