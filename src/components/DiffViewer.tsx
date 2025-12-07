@@ -261,17 +261,23 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     return text.replace(/\r/g, '');
   };
 
-  const handlePaste = async (id: string) => {
+  const handlePaste = async (id: string | null, side?: 'left' | 'right') => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
         const sanitized = sanitizeText(text);
-        if (isEditMode) {
-          // Update editable state in edit mode
-          if (leftSnippet?.id === id) setEditableLeft(sanitized);
-          if (rightSnippet?.id === id) setEditableRight(sanitized);
+        if (id) {
+          // Update existing snippet
+          if (isEditMode) {
+            // Update editable state in edit mode
+            if (leftSnippet?.id === id) setEditableLeft(sanitized);
+            if (rightSnippet?.id === id) setEditableRight(sanitized);
+          }
+          onUpdateSnippet(id, sanitized);
+        } else if (side) {
+          // Create new snippet when panel is empty
+          onTextDrop(sanitized, side);
         }
-        onUpdateSnippet(id, sanitized);
       }
     } catch (err) {
       console.error('Failed to read clipboard:', err);
@@ -558,7 +564,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 {t('copy')}
               </button>
               <button
-                onClick={() => leftSnippet?.id && handlePaste(leftSnippet.id)}
+                onClick={() => handlePaste(leftSnippet?.id || null, 'left')}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title={t('paste_tooltip')}
               >
@@ -668,7 +674,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 {t('copy')}
               </button>
               <button
-                onClick={() => rightSnippet?.id && handlePaste(rightSnippet.id)}
+                onClick={() => handlePaste(rightSnippet?.id || null, 'right')}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title={t('paste_tooltip')}
               >

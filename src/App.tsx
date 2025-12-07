@@ -221,7 +221,24 @@ export default function App() {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2 custom-scrollbar">
+        <div
+          className="flex-1 overflow-y-auto px-2 pb-4 space-y-2 custom-scrollbar"
+          onDragOver={(e) => {
+            e.preventDefault();
+            // Only handle text drops, not snippet drags
+            if (e.dataTransfer.types.includes('text/plain') && !e.dataTransfer.types.includes('snippetid')) {
+              e.dataTransfer.dropEffect = 'copy';
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            // Only handle text drops if a snippet is not being dragged
+            if (!e.dataTransfer.getData('snippetId')) {
+              const text = e.dataTransfer.getData('text/plain');
+              if (text) handleTextDrop(text);
+            }
+          }}
+        >
           {snippets.length === 0 && (
             <div className="text-center p-6 text-gray-500 text-sm">
               {t('no_snippets')}
