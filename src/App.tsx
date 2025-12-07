@@ -456,6 +456,7 @@ export default function App() {
         onCancel={() => setIsEditorOpen(false)}
         onSave={handleSaveSnippet}
         snippet={editingSnippetId ? snippets.find(s => s.id === editingSnippetId) || null : null}
+        nextCounter={untitledCounter + 1}
       />
 
     </div>

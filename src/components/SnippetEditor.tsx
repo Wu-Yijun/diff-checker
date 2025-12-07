@@ -9,9 +9,10 @@ interface SnippetEditorProps {
   onSave: (id: string, title: string, content: string) => void;
   onCancel: () => void;
   isOpen: boolean;
+  nextCounter?: number; // The next counter value for untitled snippets
 }
 
-export const SnippetEditor: React.FC<SnippetEditorProps> = ({ snippet, onSave, onCancel, isOpen }) => {
+export const SnippetEditor: React.FC<SnippetEditorProps> = ({ snippet, onSave, onCancel, isOpen, nextCounter = 1 }) => {
   const { t } = useLanguage();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -21,10 +22,12 @@ export const SnippetEditor: React.FC<SnippetEditorProps> = ({ snippet, onSave, o
       setTitle(snippet.title);
       setContent(snippet.content);
     } else {
-      setTitle(t('untitled_text'));
+      // Generate default title with counter
+      const defaultTitle = nextCounter === 1 ? t('untitled_text') : `${t('untitled_text')} ${nextCounter}`;
+      setTitle(defaultTitle);
       setContent('');
     }
-  }, [snippet, isOpen]);
+  }, [snippet, isOpen, nextCounter, t]);
 
   if (!isOpen) return null;
 
