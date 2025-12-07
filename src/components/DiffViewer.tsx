@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react'
 import { DiffPart, Snippet } from '../types';
 import { ClipboardIcon, CopyIcon, EditModeIcon, SplitByLineIcon } from './Icons';
 import type { DiffWorkerRequest, DiffWorkerResponse } from '../workers/diff.worker';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DiffViewerProps {
   leftSnippet: Snippet | null;
@@ -35,6 +36,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   onPanelSelect,
   onTextDrop
 }) => {
+  const { t } = useLanguage();
+
 
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = React.useState(false);
@@ -466,23 +469,23 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       <div className="h-12 border-b border-gray-200 dark:border-gray-800 flex items-center px-6 gap-6 bg-white/50 dark:bg-gray-900/50 backdrop-blur transition-colors duration-200 relative">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.removed} chars removed</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.removed} {t('chars_removed')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-green-500/80"></span>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.added} chars added</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{stats.added} {t('chars_added')}</span>
         </div>
 
         {/* Snippet Indicators - Centered */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 text-sm bg-gray-100 dark:bg-gray-950 py-1.5 px-3 rounded-full border border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2 max-w-[150px]">
             <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-            <span className="truncate text-gray-600 dark:text-gray-300">{leftSnippet ? leftSnippet.title : 'None'}</span>
+            <span className="truncate text-gray-600 dark:text-gray-300">{leftSnippet ? leftSnippet.title : t('none')}</span>
           </div>
-          <span className="text-gray-400 dark:text-gray-600">vs</span>
+          <span className="text-gray-400 dark:text-gray-600">{t('vs')}</span>
           <div className="flex items-center gap-2 max-w-[150px]">
             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span className="truncate text-gray-600 dark:text-gray-300">{rightSnippet ? rightSnippet.title : 'None'}</span>
+            <span className="truncate text-gray-600 dark:text-gray-300">{rightSnippet ? rightSnippet.title : t('none')}</span>
           </div>
         </div>
 
@@ -495,10 +498,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               ? 'bg-blue-600 text-white shadow-md'
               : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
               }`}
-            title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
+            title={isEditMode ? t('switch_view') : t('switch_edit')}
           >
             {EditModeIcon({ isEditMode })}
-            <span>{isEditMode ? 'Edit' : 'View'}</span>
+            <span>{isEditMode ? t('edit_mode') : t('view_mode')}</span>
           </button>
 
           {/* Split By Line Toggle */}
@@ -508,10 +511,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               ? 'bg-green-600 text-white shadow-md'
               : 'bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-800'
               }`}
-            title={splitByLine ? 'Disable Line Split' : 'Enable Line Split'}
+            title={splitByLine ? t('split_line_disable') : t('split_line_enable')}
           >
             {SplitByLineIcon({})}
-            <span>{splitByLine ? 'Line' : 'Char'}</span>
+            <span>{splitByLine ? t('line_mode') : t('char_mode')}</span>
           </button>
         </div>
       </div>
@@ -536,31 +539,31 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {dragOverSide === 'left' && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 backdrop-blur-[1px] pointer-events-none">
               <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg font-medium animate-in zoom-in-95 duration-150">
-                Drop to load on Left
+                {t('drop_left')}
               </div>
             </div>
           )}
           <div className="h-10 bg-gray-100 dark:bg-gray-900 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 select-none transition-colors duration-200">
             <div className="flex items-center overflow-hidden mr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Original (Left)</span>
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{leftSnippet?.title ?? "None"}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">{t('original_left')}</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{leftSnippet?.title ?? t('none')}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => leftSnippet?.id && handleCopy(leftSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-                title="Copy content to clipboard"
+                title={t('copy_tooltip')}
               >
                 <CopyIcon className="w-3 h-3" />
-                Copy
+                {t('copy')}
               </button>
               <button
                 onClick={() => leftSnippet?.id && handlePaste(leftSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-                title="Paste from clipboard and replace content"
+                title={t('paste_tooltip')}
               >
                 <ClipboardIcon className="w-3 h-3" />
-                Paste
+                {t('paste')}
               </button>
             </div>
           </div>
@@ -569,8 +572,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             {!leftSnippet ? (
               <div className="absolute inset-0 flex items-center justify-center p-6 text-center select-none pointer-events-none">
                 <div className="text-gray-400 dark:text-gray-600">
-                  <p className="text-lg font-medium mb-2">No Snippet Selected</p>
-                  <p className="text-sm">Drag text here, paste, or select from sidebar</p>
+                  <p className="text-lg font-medium mb-2">{t("no_snippet_selected")}</p>
+                  <p className="text-sm">{t("drag_paste_select")}</p>
                 </div>
               </div>
             ) : (
@@ -596,7 +599,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           key={index}
                           data-diff-index={index}
                           className={`absolute -translate-x-1  inline-block bg-red-500/70 dark:bg-red-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)}`}
-                          title="Missing content (Right Click to add)"
+                          title={t('missing_content')}
                           onMouseEnter={() => handleHoverEnter(index, 'left')}
                           onMouseLeave={() => setHoveredIndex(null)}
                           onClick={() => handleDiffClick(index, part, 'left')}
@@ -646,31 +649,31 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {dragOverSide === 'right' && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 backdrop-blur-[1px] pointer-events-none">
               <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg font-medium animate-in zoom-in-95 duration-150">
-                Drop to load on Right
+                {t('drop_right')}
               </div>
             </div>
           )}
           <div className="h-10 bg-gray-100 dark:bg-gray-900 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 select-none transition-colors duration-200">
             <div className="flex items-center overflow-hidden mr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Modified (Right)</span>
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{rightSnippet?.title ?? "None"}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">{t('modified_right')}</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{rightSnippet?.title ?? t('none')}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => rightSnippet?.id && handleCopy(rightSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-                title="Copy content to clipboard"
+                title={t('copy_tooltip')}
               >
                 <CopyIcon className="w-3 h-3" />
-                Copy
+                {t('copy')}
               </button>
               <button
                 onClick={() => rightSnippet?.id && handlePaste(rightSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
-                title="Paste from clipboard and replace content"
+                title={t('paste_tooltip')}
               >
                 <ClipboardIcon className="w-3 h-3" />
-                Paste
+                {t('paste')}
               </button>
             </div>
           </div>
@@ -706,7 +709,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           key={index}
                           data-diff-index={index}
                           className={`absolute -translate-x-1 inline-block bg-green-500/70 dark:bg-green-500/70 w-1 h-6 align-middle mx-[1px] rounded-[1px] ${getHighlightClass(index, false)} `}
-                          title="Missing content (Right Click to add)"
+                          title={t('missing_content')}
                           onMouseEnter={() => handleHoverEnter(index, 'right')}
                           onMouseLeave={() => setHoveredIndex(null)}
                           onClick={() => handleDiffClick(index, part, 'right')}

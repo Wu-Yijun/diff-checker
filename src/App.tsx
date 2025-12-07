@@ -4,6 +4,8 @@ import { DiffViewer } from './components/DiffViewer';
 import { Button } from './components/Button';
 import { PlusIcon, EditIcon, TrashIcon, CompareIcon, SunIcon, MoonIcon } from './components/Icons';
 import { SnippetEditor } from './components/SnippetEditor';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useLanguage } from './contexts/LanguageContext';
 
 
 
@@ -23,6 +25,7 @@ const INITIAL_SNIPPETS: Snippet[] = [
 ];
 
 export default function App() {
+  const { t } = useLanguage();
   const [snippets, setSnippets] = useState<Snippet[]>(INITIAL_SNIPPETS);
   const [leftId, setLeftId] = useState<string>('1');
   const [rightId, setRightId] = useState<string>('2');
@@ -74,7 +77,7 @@ export default function App() {
   };
 
   const handleDeleteSnippet = (id: string) => {
-    if (confirm('Are you sure you want to delete this snippet?')) {
+    if (confirm(t('confirm_delete'))) {
       // Clear selection first to prevent potential render issues
       if (leftId === id) setLeftId('');
       if (rightId === id) setRightId('');
@@ -92,7 +95,7 @@ export default function App() {
       const newId = Math.random().toString(36).substring(2, 9);
       const newSnippet: Snippet = {
         id: newId,
-        title: title || 'Untitled Snippet',
+        title: title || t('untitled_snippet'),
         content,
         createdAt: Date.now()
       };
@@ -123,7 +126,7 @@ export default function App() {
       const newId = Math.random().toString(36).substring(2, 9);
       const newSnippet: Snippet = {
         id: newId,
-        title: 'Dropped Text',
+        title: t('dropped_text'),
         content: text,
         createdAt: Date.now()
       };
@@ -209,19 +212,19 @@ export default function App() {
         onClick={() => setSelectedPanel(null)}
       >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h1 className="font-bold text-gray-900 dark:text-gray-100 text-lg tracking-tight">Different Checker</h1>
+          <h1 className="font-bold text-gray-900 dark:text-gray-100 text-lg tracking-tight">{t('app_title')}</h1>
         </div>
 
         <div className="p-4">
           <Button onClick={handleCreateSnippet} className="w-full shadow-lg shadow-blue-900/20" icon={<PlusIcon />}>
-            New Text Snippet
+            {t('new_snippet')}
           </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2 custom-scrollbar">
           {snippets.length === 0 && (
             <div className="text-center p-6 text-gray-500 text-sm">
-              No snippets created yet.
+              {t('no_snippets')}
             </div>
           )}
           {snippets.map(snippet => (
@@ -274,7 +277,7 @@ export default function App() {
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 >
-                  Set Left
+                  {t('set_left')}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setRightId(snippet.id); }}
@@ -283,7 +286,7 @@ export default function App() {
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                 >
-                  Set Right
+                  {t('set_right')}
                 </button>
               </div>
             </div>
@@ -301,7 +304,7 @@ export default function App() {
           }}
         >
           <p className="text-xs text-gray-400 dashed-border rounded p-2 border-dashed border-2 border-gray-300 dark:border-gray-700">
-            Drag text here to create new snippet
+            {t('drag_text_sidebar')}
           </p>
         </div>
       </div>
@@ -321,17 +324,20 @@ export default function App() {
               <CompareIcon className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Comparison View</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Character-level deep diffing algorithm</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('comparison_view')}</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('algorithm_desc')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
               className="p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              title={t(theme === 'light' ? 'switch_theme_dark' : 'switch_theme_light')}
             >
               {theme === 'light' ? <MoonIcon className="w-5 h-5" /> : <SunIcon className="w-5 h-5" />}
             </button>
@@ -343,20 +349,20 @@ export default function App() {
                 className={`px-2 py-1 text-xs font-medium rounded transition-colors ${cleanupMode === 'semantic' ? 'bg-blue-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                   }`}
               >
-                Semantic
+                {t('semantic')}
               </button>
               <button
                 onClick={() => setCleanupMode('efficiency')}
                 className={`px-2 py-1 text-xs font-medium rounded transition-colors ${cleanupMode === 'efficiency' ? 'bg-blue-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                   }`}
               >
-                Efficiency
+                {t('efficiency')}
               </button>
             </div>
 
             {/* Edit Cost Control */}
             <div className={"flex items-center gap-3 bg-gray-100 dark:bg-gray-950 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800" + (cleanupMode === "semantic" ? " opacity-50 pointer-events-none" : "")}>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Edit Cost: {editCost}</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('edit_cost')}: {editCost}</span>
               <input
                 type="range"
                 min="0"

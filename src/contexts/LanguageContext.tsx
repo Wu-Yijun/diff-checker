@@ -20,6 +20,7 @@ const translations: Translations = {
     semantic: 'Semantic',
     efficiency: 'Efficiency',
     edit_cost: 'Edit Cost',
+    vs: 'vs',
 
     // DiffViewer
     chars_removed: 'chars removed',
@@ -76,6 +77,7 @@ const translations: Translations = {
     semantic: '语义优先',
     efficiency: '效率优先',
     edit_cost: '编辑成本',
+    vs: '对比',
 
     // DiffViewer
     chars_removed: '字符删除',
