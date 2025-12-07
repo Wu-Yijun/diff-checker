@@ -17,7 +17,7 @@ interface DiffViewerProps {
   onSplitByLineChange: (enabled: boolean) => void;
   selectedPanel: 'left' | 'right' | null;
   onPanelSelect: (panel: 'left' | 'right' | null) => void;
-  onTextDrop: (content: string, side?: 'left' | 'right') => void;
+  onTextDrop: (content: string, side?: 'left' | 'right', source?: 'drop' | 'paste') => void;
 }
 
 
@@ -276,7 +276,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           onUpdateSnippet(id, sanitized);
         } else if (side) {
           // Create new snippet when panel is empty
-          onTextDrop(sanitized, side);
+          onTextDrop(sanitized, side, 'paste');
         }
       }
     } catch (err) {

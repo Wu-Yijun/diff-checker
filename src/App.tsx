@@ -53,6 +53,14 @@ export default function App() {
   // Panel Selection State
   const [selectedPanel, setSelectedPanel] = useState<'left' | 'right' | null>(null);
 
+  // Sidebar Drop Zone Highlight State
+  const [isDropZoneActive, setIsDropZoneActive] = useState<boolean>(false);
+
+  // Snippet Creation Counters
+  const [untitledCounter, setUntitledCounter] = useState<number>(0);
+  const [droppedCounter, setDroppedCounter] = useState<number>(0);
+  const [pastedCounter, setPastedCounter] = useState<number>(0);
+
   useEffect(() => {
     localStorage.setItem('theme', theme);
     if (theme === 'dark') {
@@ -91,11 +99,14 @@ export default function App() {
       // Update existing
       setSnippets(prev => prev.map(s => s.id === id ? { ...s, title, content } : s));
     } else {
-      // Create new
+      // Create new from "New Snippet" button
       const newId = Math.random().toString(36).substring(2, 9);
+      const newCounter = untitledCounter + 1;
+      setUntitledCounter(newCounter);
+      const finalTitle = title || (newCounter === 1 ? t('untitled_text') : `${t('untitled_text')} ${newCounter}`);
       const newSnippet: Snippet = {
         id: newId,
-        title: title || t('untitled_snippet'),
+        title: finalTitle,
         content,
         createdAt: Date.now()
       };
@@ -120,13 +131,25 @@ export default function App() {
     if (side === 'right') setRightId(snippetId);
   };
 
-  const handleTextDrop = (content: string, side?: 'left' | 'right') => {
+  const handleTextDrop = (content: string, side?: 'left' | 'right', source: 'drop' | 'paste' = 'drop') => {
     // Helper to create a new snippet from text
     const createSnippet = (text: string) => {
       const newId = Math.random().toString(36).substring(2, 9);
+
+      let title: string;
+      if (source === 'drop') {
+        const newCounter = droppedCounter + 1;
+        setDroppedCounter(newCounter);
+        title = newCounter === 1 ? t('dropped_text') : `${t('dropped_text')} ${newCounter}`;
+      } else {
+        const newCounter = pastedCounter + 1;
+        setPastedCounter(newCounter);
+        title = newCounter === 1 ? t('pasted_text') : `${t('pasted_text')} ${newCounter}`;
+      }
+
       const newSnippet: Snippet = {
         id: newId,
-        title: t('dropped_text'),
+        title,
         content: text,
         createdAt: Date.now()
       };
@@ -191,7 +214,7 @@ export default function App() {
           try {
             const text = await navigator.clipboard.readText();
             if (text) {
-              handleTextDrop(text, selectedPanel);
+              handleTextDrop(text, selectedPanel, 'paste');
             }
           } catch (err) {
             console.error('Failed to paste', err);
@@ -312,15 +335,30 @@ export default function App() {
 
         {/* Drop Zone for new text snippets */}
         <div
-          className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 text-center"
-          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+          className={`p-4 border-t border-gray-200 dark:border-gray-800 text-center transition-all duration-200 ${isDropZoneActive
+            ? 'bg-blue-50 dark:bg-blue-900/20'
+            : 'bg-gray-50 dark:bg-gray-900/40'
+            }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            setIsDropZoneActive(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setIsDropZoneActive(false);
+          }}
           onDrop={(e) => {
             e.preventDefault();
+            setIsDropZoneActive(false);
             const text = e.dataTransfer.getData('text/plain');
             if (text) handleTextDrop(text);
           }}
         >
-          <p className="text-xs text-gray-400 dashed-border rounded p-2 border-dashed border-2 border-gray-300 dark:border-gray-700">
+          <p className={`text-xs rounded p-2 border-dashed border-2 transition-all duration-200 ${isDropZoneActive
+            ? 'text-blue-600 dark:text-blue-400 border-blue-400 dark:border-blue-500 bg-blue-100/50 dark:bg-blue-800/30'
+            : 'text-gray-400 border-gray-300 dark:border-gray-700'
+            }`}>
             {t('drag_text_sidebar')}
           </p>
         </div>

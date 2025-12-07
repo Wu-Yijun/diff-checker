@@ -60,8 +60,9 @@ const translations: Translations = {
     save_snippet: 'Save Snippet',
 
     // Config / Defaults
-    untitled_snippet: 'Untitled Snippet',
+    untitled_text: 'Untitled Text',
     dropped_text: 'Dropped Text',
+    pasted_text: 'Pasted Text',
     confirm_delete: 'Are you sure you want to delete this snippet?',
     set_left: 'Set Left',
     set_right: 'Set Right',
@@ -119,8 +120,9 @@ const translations: Translations = {
     save_snippet: '保存片段',
 
     // Config / Defaults
-    untitled_snippet: '未命名片段',
+    untitled_text: '未命名文本',
     dropped_text: '拖拽文本',
+    pasted_text: '粘贴文本',
     confirm_delete: '确定要删除此片段吗？',
     set_left: '设为左侧',
     set_right: '设为右侧',

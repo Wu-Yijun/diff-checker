@@ -21,7 +21,7 @@ export const SnippetEditor: React.FC<SnippetEditorProps> = ({ snippet, onSave, o
       setTitle(snippet.title);
       setContent(snippet.content);
     } else {
-      setTitle(t('untitled_snippet'));
+      setTitle(t('untitled_text'));
       setContent('');
     }
   }, [snippet, isOpen]);
