@@ -59,6 +59,9 @@ export default function App() {
   // Split By Line State
   const [splitByLine, setSplitByLine] = useState<boolean>(false);
 
+  // Panel Selection State
+  const [selectedPanel, setSelectedPanel] = useState<'left' | 'right' | null>(null);
+
   useEffect(() => {
     localStorage.setItem('theme', theme);
     if (theme === 'dark') {
@@ -104,12 +107,16 @@ export default function App() {
         createdAt: Date.now()
       };
       setSnippets(prev => [...prev, newSnippet]);
-      // Auto-select if slot is empty
-      if (!leftId) setLeftId(newId);
+
+      // Auto-assign to selected panel if available, otherwise check empty slots
+      if (selectedPanel === 'left') setLeftId(newId);
+      else if (selectedPanel === 'right') setRightId(newId);
+      else if (!leftId) setLeftId(newId);
       else if (!rightId) setRightId(newId);
     }
     setIsEditorOpen(false);
   };
+
 
   const handleUpdateSnippetContent = (id: string, newContent: string) => {
     setSnippets(prev => prev.map(s => s.id === id ? { ...s, content: newContent } : s));
@@ -119,6 +126,94 @@ export default function App() {
     if (side === 'left') setLeftId(snippetId);
     if (side === 'right') setRightId(snippetId);
   };
+
+  const handleTextDrop = (content: string, side?: 'left' | 'right') => {
+    // Helper to create a new snippet from text
+    const createSnippet = (text: string) => {
+      const newId = Math.random().toString(36).substring(2, 9);
+      const newSnippet: Snippet = {
+        id: newId,
+        title: 'Dropped Text',
+        content: text,
+        createdAt: Date.now()
+      };
+      setSnippets(prev => [...prev, newSnippet]);
+      return newId;
+    };
+
+    if (side) {
+      // Dropped into a specific panel
+      const currentId = side === 'left' ? leftId : rightId;
+      const currentSnippet = snippets.find(s => s.id === currentId);
+
+      if (currentSnippet) {
+        // Replace content of existing snippet
+        handleUpdateSnippetContent(currentId, content);
+      } else {
+        // Create new snippet and assign
+        const newId = createSnippet(content);
+        if (side === 'left') setLeftId(newId);
+        else setRightId(newId);
+      }
+    } else {
+      // Dropped into sidebar
+      createSnippet(content);
+    }
+  };
+
+  const handleSnippetClick = (id: string) => {
+    if (selectedPanel === 'left') setLeftId(id);
+    else if (selectedPanel === 'right') setRightId(id);
+  };
+
+  // Global Key Handler for Copy/Paste
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input or textarea (unless it's the hidden clipboard target, handled natively? 
+      // Actually, if active element is an input, we usually don't want to override copy/paste unless we are sure)
+      // However, the requirement is "Ctrl+C/V can copy/replace internal text (provided internal text is not selected)"
+      // If the focused element is our textarea, native copy/paste works. 
+      // We only want to intervene if NO text is selected or focus is not in an editor.
+
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInput = activeTag === 'input' || activeTag === 'textarea';
+
+      // If text is selected in an input, let default behavior happen
+      if (isInput) {
+        const selection = window.getSelection();
+        if (selection && selection.toString().length > 0) return;
+      }
+
+      if (selectedPanel && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'c') {
+          // Copy
+          const snippet = selectedPanel === 'left' ? leftSnippet : rightSnippet;
+          if (snippet) {
+            e.preventDefault();
+            try {
+              await navigator.clipboard.writeText(snippet.content);
+            } catch (err) {
+              console.error('Failed to copy', err);
+            }
+          }
+        } else if (e.key === 'v') {
+          // Paste
+          e.preventDefault();
+          try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              handleTextDrop(text, selectedPanel);
+            }
+          } catch (err) {
+            console.error('Failed to paste', err);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPanel, leftSnippet, rightSnippet]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans selection:bg-blue-500/30 transition-colors duration-200">
@@ -148,7 +243,8 @@ export default function App() {
                 e.dataTransfer.setData('snippetId', snippet.id);
                 e.dataTransfer.effectAllowed = 'copy';
               }}
-              className={`group p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-grab active:cursor-grabbing ${(leftId === snippet.id || rightId === snippet.id)
+              onClick={() => handleSnippetClick(snippet.id)}
+              className={`group p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${(leftId === snippet.id || rightId === snippet.id)
                 ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-sm'
                 : 'bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                 }`}
@@ -201,10 +297,32 @@ export default function App() {
             </div>
           ))}
         </div>
+
+        {/* Drop Zone for new text snippets */}
+        <div
+          className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 text-center"
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const text = e.dataTransfer.getData('text/plain');
+            if (text) handleTextDrop(text);
+          }}
+        >
+          <p className="text-xs text-gray-400 dashed-border rounded p-2 border-dashed border-2 border-gray-300 dark:border-gray-700">
+            Drag text here to create new snippet
+          </p>
+        </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+      <div
+        className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200"
+        onClick={(e) => {
+          // Deselect if clicking on the background (not on a panel)
+          // ensuring we don't interfere with panel clicks which stop propagation
+          if (e.target === e.currentTarget) setSelectedPanel(null);
+        }}
+      >
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-6 flex-shrink-0 shadow-sm z-10 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
@@ -273,6 +391,9 @@ export default function App() {
           splitByLine={splitByLine}
           onEditModeChange={setIsEditMode}
           onSplitByLineChange={setSplitByLine}
+          selectedPanel={selectedPanel}
+          onPanelSelect={setSelectedPanel}
+          onTextDrop={handleTextDrop}
         />
       </div>
 
