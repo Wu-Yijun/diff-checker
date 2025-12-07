@@ -423,7 +423,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {/* Left Drop Zone (Empty State) */}
           <div
             className={`flex-1 flex flex-col items-center justify-center border-r border-gray-200 dark:border-gray-800 transition-all duration-200 ${dragOverSide === 'left' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              } ${selectedPanel === 'left' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+              } ${selectedPanel === 'left' ? 'ring-inset ring-4 ring-blue-500/50 bg-blue-100/50 dark:bg-blue-900/30 font-semibold' : ''}`}
             onDragOver={(e) => handleDragOver(e, 'left')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'left')}
@@ -440,7 +440,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           {/* Right Drop Zone (Empty State) */}
           <div
             className={`flex-1 flex flex-col items-center justify-center transition-all duration-200 ${dragOverSide === 'right' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              } ${selectedPanel === 'right' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+              } ${selectedPanel === 'right' ? 'ring-inset ring-4 ring-blue-500/50 bg-blue-100/50 dark:bg-blue-900/30 font-semibold' : ''}`}
             onDragOver={(e) => handleDragOver(e, 'right')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'right')}
@@ -574,7 +574,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Left Panel (Original) */}
         <div
           className={`flex-1 flex flex-col border-r border-gray-200 dark:border-gray-800 min-w-0 transition-all duration-200 relative ${dragOverSide === 'left' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : ''
-            } ${selectedPanel === 'left' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/10 dark:bg-blue-900/5' : ''}`}
+            } ${selectedPanel === 'left' ? 'ring-inset ring-4 ring-blue-500/50 z-10' : ''}`}
           onDragOver={(e) => handleDragOver(e, 'left')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'left')}
@@ -670,7 +670,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Right Panel (Modified) */}
         <div
           className={`flex-1 flex flex-col min-w-0 transition-all duration-200 relative ${dragOverSide === 'right' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : ''
-            } ${selectedPanel === 'right' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/10 dark:bg-blue-900/5' : ''}`}
+            } ${selectedPanel === 'right' ? 'ring-inset ring-4 ring-blue-500/50 z-10' : ''}`}
           onDragOver={(e) => handleDragOver(e, 'right')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'right')}

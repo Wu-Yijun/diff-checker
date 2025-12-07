@@ -87,9 +87,11 @@ export default function App() {
 
   const handleDeleteSnippet = (id: string) => {
     if (confirm('Are you sure you want to delete this snippet?')) {
-      setSnippets(prev => prev.filter(s => s.id !== id));
+      // Clear selection first to prevent potential render issues
       if (leftId === id) setLeftId('');
       if (rightId === id) setRightId('');
+      // Then remove from list
+      setSnippets(prev => prev.filter(s => s.id !== id));
     }
   };
 
@@ -169,20 +171,16 @@ export default function App() {
   // Global Key Handler for Copy/Paste
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input or textarea (unless it's the hidden clipboard target, handled natively? 
-      // Actually, if active element is an input, we usually don't want to override copy/paste unless we are sure)
-      // However, the requirement is "Ctrl+C/V can copy/replace internal text (provided internal text is not selected)"
-      // If the focused element is our textarea, native copy/paste works. 
-      // We only want to intervene if NO text is selected or focus is not in an editor.
+      // If user has selected text on the page, do not override copy behavior
+      // This handles both the hidden textarea in View mode and normal inputs
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) return;
 
-      const activeTag = document.activeElement?.tagName.toLowerCase();
-      const isInput = activeTag === 'input' || activeTag === 'textarea';
-
-      // If text is selected in an input, let default behavior happen
-      if (isInput) {
-        const selection = window.getSelection();
-        if (selection && selection.toString().length > 0) return;
-      }
+      // Also check if active element is an input/textarea to be safe, though getSelection covers most cases
+      // except where caret is inside but no text selected - we want Panel Copy in that case? 
+      // User request: "Copy/replace internal text (provided internal text is not selected)"
+      // If caret is in textarea but no selection, Ctrl+C usually does nothing or copies line. 
+      // We will override if NO selection.
 
       if (selectedPanel && (e.ctrlKey || e.metaKey)) {
         if (e.key === 'c') {
