@@ -422,13 +422,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         <div className="flex-1 flex">
           {/* Left Drop Zone (Empty State) */}
           <div
-            className={`flex-1 flex flex-col items-center justify-center border-r border-gray-200 dark:border-gray-800 transition-all duration-200 ${dragOverSide === 'left' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              } ${selectedPanel === 'left' ? 'ring-inset ring-4 ring-blue-500/50 bg-blue-100/50 dark:bg-blue-900/30 font-semibold' : ''}`}
+            className={`flex-1 flex flex-col items-center justify-center border-r border-gray-200 dark:border-gray-800 transition-all duration-200 relative ${dragOverSide === 'left' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
+              }`}
             onDragOver={(e) => handleDragOver(e, 'left')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'left')}
             onClick={(e) => { e.stopPropagation(); onPanelSelect('left'); }}
           >
+            {/* Selection Overlay */}
+            {selectedPanel === 'left' && (
+              <div className="absolute inset-0 z-10 pointer-events-none ring-inset ring-4 ring-blue-500/50 bg-blue-100/10 dark:bg-blue-900/10" />
+            )}
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4 mx-auto border border-gray-300 dark:border-gray-800">
                 <span className="text-2xl text-gray-400">L</span>
@@ -439,13 +443,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
           {/* Right Drop Zone (Empty State) */}
           <div
-            className={`flex-1 flex flex-col items-center justify-center transition-all duration-200 ${dragOverSide === 'right' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              } ${selectedPanel === 'right' ? 'ring-inset ring-4 ring-blue-500/50 bg-blue-100/50 dark:bg-blue-900/30 font-semibold' : ''}`}
+            className={`flex-1 flex flex-col items-center justify-center transition-all duration-200 relative ${dragOverSide === 'right' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
+              }`}
             onDragOver={(e) => handleDragOver(e, 'right')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'right')}
             onClick={(e) => { e.stopPropagation(); onPanelSelect('right'); }}
           >
+            {/* Selection Overlay */}
+            {selectedPanel === 'right' && (
+              <div className="absolute inset-0 z-10 pointer-events-none ring-inset ring-4 ring-blue-500/50 bg-blue-100/10 dark:bg-blue-900/10" />
+            )}
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4 mx-auto border border-gray-300 dark:border-gray-800">
                 <span className="text-2xl text-gray-400">R</span>
@@ -573,13 +581,19 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel (Original) */}
         <div
-          className={`flex-1 flex flex-col border-r border-gray-200 dark:border-gray-800 min-w-0 transition-all duration-200 relative ${dragOverSide === 'left' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : ''
-            } ${selectedPanel === 'left' ? 'ring-inset ring-4 ring-blue-500/50 z-10' : ''}`}
+          className={
+            "flex-1 flex flex-col border-r border-gray-200 dark:border-gray-800 min-w-0 transition-all duration-200 relative "
+            + (dragOverSide === 'left' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : '')
+          }
           onDragOver={(e) => handleDragOver(e, 'left')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'left')}
           onClick={(e) => { e.stopPropagation(); onPanelSelect('left'); }}
         >
+          {/* Selection Overlay */}
+          {selectedPanel === 'left' && (
+            <div className="absolute inset-0 z-20 pointer-events-none ring-inset ring-4 ring-blue-500/50" />
+          )}
           {dragOverSide === 'left' && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 backdrop-blur-[1px] pointer-events-none">
               <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg font-medium animate-in zoom-in-95 duration-150">
@@ -670,12 +684,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Right Panel (Modified) */}
         <div
           className={`flex-1 flex flex-col min-w-0 transition-all duration-200 relative ${dragOverSide === 'right' ? 'ring-inset ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10' : ''
-            } ${selectedPanel === 'right' ? 'ring-inset ring-4 ring-blue-500/50 z-10' : ''}`}
+            }`}
           onDragOver={(e) => handleDragOver(e, 'right')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'right')}
           onClick={(e) => { e.stopPropagation(); onPanelSelect('right'); }}
         >
+          {/* Selection Overlay */}
+          {selectedPanel === 'right' && (
+            <div className="absolute inset-0 z-20 pointer-events-none ring-inset ring-4 ring-blue-500/50" />
+          )}
           {dragOverSide === 'right' && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 backdrop-blur-[1px] pointer-events-none">
               <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg font-medium animate-in zoom-in-95 duration-150">

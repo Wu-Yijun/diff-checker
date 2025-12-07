@@ -316,9 +316,9 @@ export default function App() {
       <div
         className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200"
         onClick={(e) => {
-          // Deselect if clicking on the background (not on a panel)
-          // ensuring we don't interfere with panel clicks which stop propagation
-          if (e.target === e.currentTarget) setSelectedPanel(null);
+          // Deselect if clicking anywhere in the main area (background/header/etc)
+          // Panels stop propagation, so this only fires for clicks outside panels
+          setSelectedPanel(null);
         }}
       >
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-6 flex-shrink-0 shadow-sm z-10 transition-colors duration-200">
