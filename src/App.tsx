@@ -7,26 +7,33 @@ import { SnippetEditor } from './components/SnippetEditor';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { useLanguage } from './contexts/LanguageContext';
 
-
+const version = "1.0.0";
 
 const INITIAL_SNIPPETS: Snippet[] = [
   {
     id: '1',
     title: 'Example: Original Text',
-    content: `The quick brown fox jumps over the lazy dog.\nThis is a simple text to demonstrate character-level diffing.\n\nMathematical precision is key.`,
+    content: `The quick brown fox jumps over the lazy dog.\nThis is a simple text to demonstrate character-level diffing.\n\n(Current Version: ${version})`,
     createdAt: Date.now()
   },
   {
     id: '2',
     title: 'Example: Modified Text',
-    content: `The fast brown fox leaped over the lazy dog.\nThis is a complex text to demonstrate character-level diffing algorithms.\n\nVisual precision is key.`,
+    content: `The fast brown fox leaped over the lazy dog.\nThis is a complex text to demonstrate character-level diffing algorithms.\n\n(This snippet only appears at the first time)`,
     createdAt: Date.now() + 1
   }
 ];
 
 export default function App() {
   const { t } = useLanguage();
-  const [snippets, setSnippets] = useState<Snippet[]>(INITIAL_SNIPPETS);
+  const [snippets, setSnippets] = useState<Snippet[]>(() => {
+    const old_version = localStorage.getItem('version');
+    if (old_version !== version) {
+      localStorage.setItem('version', version);
+      return INITIAL_SNIPPETS;
+    }
+    return [];
+  });
   const [leftId, setLeftId] = useState<string>('1');
   const [rightId, setRightId] = useState<string>('2');
 
