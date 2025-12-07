@@ -35,6 +35,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   onPanelSelect,
   onTextDrop
 }) => {
+
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = React.useState(false);
   const [dragOverSide, setDragOverSide] = React.useState<'left' | 'right' | null>(null);
@@ -193,13 +194,6 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     return;
 
   }, [editableLeft, editableRight, editCost, cleanupMode, isEditMode, splitByLine]);
-
-  // // Use worker diff in edit mode, regular diff otherwise
-  // const diff = useMemo(() => {
-  //   if (isEditMode) return workerDiff;
-  //   if (!leftSnippet || !rightSnippet) return [];
-  //   return computeDiff(leftSnippet.content, rightSnippet.content, editCost, cleanupMode);
-  // }, [isEditMode, workerDiff, leftSnippet, rightSnippet, editCost, cleanupMode]);
 
   const stats = useMemo(() => {
     let added = 0;
@@ -416,56 +410,6 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     }
   };
 
-  if (!leftSnippet || !rightSnippet) {
-    return (
-      <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
-        <div className="flex-1 flex">
-          {/* Left Drop Zone (Empty State) */}
-          <div
-            className={`flex-1 flex flex-col items-center justify-center border-r border-gray-200 dark:border-gray-800 transition-all duration-200 relative ${dragOverSide === 'left' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              }`}
-            onDragOver={(e) => handleDragOver(e, 'left')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'left')}
-            onClick={(e) => { e.stopPropagation(); onPanelSelect('left'); }}
-          >
-            {/* Selection Overlay */}
-            {selectedPanel === 'left' && (
-              <div className="absolute inset-0 z-10 pointer-events-none ring-inset ring-4 ring-blue-500/50 bg-blue-100/10 dark:bg-blue-900/10" />
-            )}
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4 mx-auto border border-gray-300 dark:border-gray-800">
-                <span className="text-2xl text-gray-400">L</span>
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 font-medium">Drag snippet here for Left</p>
-            </div>
-          </div>
-
-          {/* Right Drop Zone (Empty State) */}
-          <div
-            className={`flex-1 flex flex-col items-center justify-center transition-all duration-200 relative ${dragOverSide === 'right' ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-blue-500' : ''
-              }`}
-            onDragOver={(e) => handleDragOver(e, 'right')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'right')}
-            onClick={(e) => { e.stopPropagation(); onPanelSelect('right'); }}
-          >
-            {/* Selection Overlay */}
-            {selectedPanel === 'right' && (
-              <div className="absolute inset-0 z-10 pointer-events-none ring-inset ring-4 ring-blue-500/50 bg-blue-100/10 dark:bg-blue-900/10" />
-            )}
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4 mx-auto border border-gray-300 dark:border-gray-800">
-                <span className="text-2xl text-gray-400">R</span>
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 font-medium">Drag snippet here for Right</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const getHighlightClass = (index: number, relative = true) => {
     const pairIndex = getPairIndex(index);
     const isHovered = hoveredIndex === index || (pairIndex !== null && hoveredIndex === pairIndex);
@@ -509,6 +453,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       }
     }
   }, [workerDiff]);
+
+
+  // console.warn(leftSnippet, rightSnippet);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
@@ -604,11 +551,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           <div className="h-10 bg-gray-100 dark:bg-gray-900 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 select-none transition-colors duration-200">
             <div className="flex items-center overflow-hidden mr-2">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Original (Left)</span>
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{leftSnippet.title}</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{leftSnippet?.title ?? "None"}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleCopy(leftSnippet.id)}
+                onClick={() => leftSnippet?.id && handleCopy(leftSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title="Copy content to clipboard"
               >
@@ -616,7 +563,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 Copy
               </button>
               <button
-                onClick={() => handlePaste(leftSnippet.id)}
+                onClick={() => leftSnippet?.id && handlePaste(leftSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title="Paste from clipboard and replace content"
               >
@@ -704,11 +651,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           <div className="h-10 bg-gray-100 dark:bg-gray-900 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 select-none transition-colors duration-200">
             <div className="flex items-center overflow-hidden mr-2">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 flex-shrink-0">Modified (Right)</span>
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{rightSnippet.title}</span>
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 truncate">{rightSnippet?.title ?? "None"}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleCopy(rightSnippet.id)}
+                onClick={() => rightSnippet?.id && handleCopy(rightSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title="Copy content to clipboard"
               >
@@ -716,7 +663,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 Copy
               </button>
               <button
-                onClick={() => handlePaste(rightSnippet.id)}
+                onClick={() => rightSnippet?.id && handlePaste(rightSnippet.id)}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded transition-colors"
                 title="Paste from clipboard and replace content"
               >
