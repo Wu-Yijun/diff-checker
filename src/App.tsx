@@ -10,18 +10,18 @@ import { useLanguage } from './contexts/LanguageContext';
 
 
 const INITIAL_SNIPPETS: Snippet[] = [
-  {
-    id: '1',
-    title: 'Example: Original Text',
-    content: `The quick brown fox jumps over the lazy dog.\nThis is a simple text to demonstrate character-level diffing.\n\nMathematical precision is key.`,
-    createdAt: Date.now()
-  },
-  {
-    id: '2',
-    title: 'Example: Modified Text',
-    content: `The fast brown fox leaped over the lazy dog.\nThis is a complex text to demonstrate character-level diffing algorithms.\n\nVisual precision is key.`,
-    createdAt: Date.now() + 1
-  }
+  // {
+  //   id: '1',
+  //   title: 'Example: Original Text',
+  //   content: `The quick brown fox jumps over the lazy dog.\nThis is a simple text to demonstrate character-level diffing.\n\nMathematical precision is key.`,
+  //   createdAt: Date.now()
+  // },
+  // {
+  //   id: '2',
+  //   title: 'Example: Modified Text',
+  //   content: `The fast brown fox leaped over the lazy dog.\nThis is a complex text to demonstrate character-level diffing algorithms.\n\nVisual precision is key.`,
+  //   createdAt: Date.now() + 1
+  // }
 ];
 
 export default function App() {
