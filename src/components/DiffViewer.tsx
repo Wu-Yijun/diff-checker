@@ -688,8 +688,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             {!rightSnippet ? (
               <div className="absolute inset-0 flex items-center justify-center p-6 text-center select-none pointer-events-none">
                 <div className="text-gray-400 dark:text-gray-600">
-                  <p className="text-lg font-medium mb-2">No Snippet Selected</p>
-                  <p className="text-sm">Drag text here, paste, or select from sidebar</p>
+                  <p className="text-lg font-medium mb-2">{t('no_snippet_selected')}</p>
+                  <p className="text-sm">{t('drag_paste_select')}</p>
                 </div>
               </div>
             ) : (
